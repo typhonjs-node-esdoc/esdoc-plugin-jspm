@@ -42,9 +42,6 @@ var jspm =  require('jspm');
 var path =  require('path');
 var url =   require('url');
 
-// Set the package path to the local root where config.js is located.
-jspm.setPackagePath('.');
-
 var packagePath = './package.json';
 
 var docDestination;
@@ -100,9 +97,6 @@ exports.onHandleConfig = function(ev)
       // ignore
    }
 
-   // Create SystemJS Loader
-   var System = new jspm.Loader();
-
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
    docDestination = ev.data.config.destination;
    docGitIgnore = docDestination + path.sep +'.gitignore';
@@ -120,14 +114,47 @@ exports.onHandleConfig = function(ev)
    var splitDirPath = rootPath.split(path.sep);
 
    // Pop the top two directories
+   var pluginSrcDir = splitDirPath.pop();
    var esdocPluginDir = splitDirPath.pop();
    var nodeModuleDir = splitDirPath.pop();
 
    // Set the actual root path if everything looks correct
-   if (esdocPluginDir === 'esdoc-plugin-jspm' && nodeModuleDir === 'node_modules')
+   if (pluginSrcDir === 'src' && esdocPluginDir === 'esdoc-plugin-jspm' && nodeModuleDir === 'node_modules')
    {
       rootPath = splitDirPath.join(path.sep);
+
+      // Verify that a JSPM config.js file exists in target root directory
+      if (!fs.existsSync(rootPath +path.sep +'config.js'))
+      {
+         console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+         throw new Error();
+      }
    }
+   else
+   {
+      console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+      throw new Error();
+   }
+
+   var localSrcFullPath = rootPath +path.sep +localSrcRoot;
+
+   if (!fs.existsSync(localSrcFullPath))
+   {
+      console.log("esdoc-plugin-jspm - Error: could not locate local source path: '" +localSrcFullPath +"'");
+      throw new Error();
+   }
+
+   // Remove an leading local directory string
+   localSrcRoot = localSrcRoot.replace(new RegExp('^\.' +(path.sep === '\\' ? '\\' +path.sep : path.sep)), '');
+
+   console.log("esdoc-plugin-jspm - Info: operating in root path: '" +rootPath +"'");
+   console.log("esdoc-plugin-jspm - Info: linking local source root: '" +localSrcRoot +"'");
+
+   // Set the package path to the local root where config.js is located.
+   jspm.setPackagePath(rootPath);
+
+   // Create SystemJS Loader
+   var System = new jspm.Loader();
 
    // ESDoc uses the root directory name if no package.json with a package name exists.
    var rootDir = splitDirPath.pop();
@@ -140,7 +167,7 @@ exports.onHandleConfig = function(ev)
    if (option.packages.length <= 0)
    {
       console.log(
-       "esdoc-plugin-jspm Warning: no JSPM packages specified or missing 'option' -> 'packages' data.");
+       "esdoc-plugin-jspm - Warning: no JSPM packages specified or missing 'option' -> 'packages' data.");
    }
 
    for (var cntr = 0; cntr < option.packages.length; cntr++)
@@ -174,11 +201,15 @@ exports.onHandleConfig = function(ev)
                throw new Error("'esdoc.json' does not have a valid 'source' entry");
             }
 
+            // Remove an leading local directory string
+            var jspmSrcRoot = packageESDocConfig.source;
+            jspmSrcRoot = jspmSrcRoot.replace(new RegExp('^\.' +(path.sep === '\\' ? '\\' +path.sep : path.sep)), '');
+
             // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
-            relativePath += path.sep + packageESDocConfig.source;
+            relativePath += path.sep + jspmSrcRoot;
 
             // Add to the JSPM package full path the location of the sources defined in it's esdoc.json config.
-            fullPath += path.sep + packageESDocConfig.source;
+            fullPath += path.sep + jspmSrcRoot;
 
             // Verify that the full path to the JSPM package source exists.
             if (!fs.existsSync(fullPath))
@@ -196,16 +227,16 @@ exports.onHandleConfig = function(ev)
                source: packageESDocConfig.source
             });
 
-            console.log("esdoc-plugin-jspm linked JSPM package '" +packageName +"' to: " +relativePath);
+            console.log("esdoc-plugin-jspm - Info: linked JSPM package '" +packageName +"' to: " +relativePath);
          }
          catch(err)
          {
-            console.log("esdoc-plugin-jspm " +err +" for JSPM package '" +packageName +"'");
+            console.log("esdoc-plugin-jspm - " +err +" for JSPM package '" +packageName +"'");
          }
       }
       else
       {
-         console.log("esdoc-plugin-jspm Warning: skipping '" +packageName
+         console.log("esdoc-plugin-jspm - Warning: skipping '" +packageName
           +"' as it does not appear to be a JSPM package.");
       }
    }
