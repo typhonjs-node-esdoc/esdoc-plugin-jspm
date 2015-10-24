@@ -92,7 +92,7 @@ gulp.task('docs', function()
 
 For a complete demo with instructions on how to use Backbone-Parse-ES6 (Backbone + Parse 1.6+) with SystemJS / JSPM see the [Backbone-Parse-ES6-Demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp and ESDoc is covered. 
 
-Currently the [ESDoc Hosting Service](https://doc.esdoc.org/) isn't JSPM / SystemJS aware, so docs will have to be hosted independently.
+Currently the [ESDoc Hosting Service](https://doc.esdoc.org/) isn't JSPM / SystemJS aware, so docs will have to be generated locally and hosted independently.
 
 Check out the docs for [Backbone-Parse-ES6](http://js.typhonrt.org/docs/backbone-parse-es6/) and notice that when viewing [ParseCollection](http://js.typhonrt.org/docs/backbone-parse-es6/class/backbone-parse-es6/src/ParseCollection.js~ParseCollection.html) that it properly contains links to the inheriting class from a JSPM package ([Backbone-ES6](https://github.com/typhonjs/backbone-es6)) and also contains an `Inherited Summary` section for Collection & Event which is in the inheritance structure. 
 
