@@ -47,8 +47,9 @@ jspm.setPackagePath('.');
 
 var packagePath = './package.json';
 
-var docDestination = null;
-var docSearchScript = null;
+var docDestination;
+var docGitIgnore;
+var docSearchScript;
 
 // Stores all RegExp for JSPM packages to run against ES6 import statements.
 var codeReplace = [];
@@ -107,8 +108,9 @@ exports.onHandleConfig = function(ev)
    // Create SystemJS Loader
    var System = new jspm.Loader();
 
-   // Store destination for sources and create the path to <doc destination>/script/search_index.js
+   // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
    docDestination = ev.data.config.destination;
+   docGitIgnore = docDestination + path.sep +'.gitignore';
    docSearchScript = docDestination + path.sep +'script' +path.sep +'search_index.js';
 
    // The source root is rewritten, so save the current value.
@@ -320,10 +322,8 @@ exports.onHandleHTML = function(ev)
 
 /**
  * The search data file must have JSPM package paths replaced with normalized versions.
- *
- * @param {object}   ev - Event from ESDoc containing data field
  */
-exports.onComplete = function(ev)
+exports.onComplete = function()
 {
    var buffer = fs.readFileSync(docSearchScript, 'utf8');
 
@@ -350,4 +350,10 @@ exports.onComplete = function(ev)
    buffer = 'window.esdocSearchIndex = ' + JSON.stringify(json, null, 2);
 
    fs.writeFileSync(docSearchScript, buffer);
+
+   // Create a `.gitignore` file that prevents checking in unnecessary ESDoc files like the AST and other generated
+   // assets that are not necessary for viewing the docs. Also unprotects any jspm_packages directive from a
+   // parent .gitignore as generated docs from JSPM packages will output to child directories with `jspm_packages`.
+   var gitIgnore = "!jspm_packages\nast\ncoverage.json\ndump.json\npackage.json";
+   fs.writeFileSync(docGitIgnore, gitIgnore);
 };
