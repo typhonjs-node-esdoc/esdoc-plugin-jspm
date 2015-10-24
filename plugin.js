@@ -104,13 +104,14 @@ console.log('onHandleConfig - mainPath: ' +mainPath);
 
    ev.data.config.source = '.';
 
-var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm';
+//var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm';
 
    // __dirname is the node_modules/esdoc-plugin-jspm directory
-//   var rootPath = __dirname;
-   var rootPath = testDirname;
+   var rootPath = __dirname;
+//   var rootPath = testDirname;
 
-   var splitDirPath = testDirname.split(path.sep);
+   var splitDirPath = rootPath.split(path.sep);
+//   var splitDirPath = testDirname.split(path.sep);
 
    // Pop the top two directories
    var esdocPluginDir = splitDirPath.pop();
@@ -127,7 +128,7 @@ var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-back
    rootPackageName = rootPackageName || rootDir;
 
 console.log('onHandleConfig - __dirname: ' +__dirname);
-console.log('onHandleConfig - testDirname: ' +testDirname);
+//console.log('onHandleConfig - testDirname: ' +testDirname);
 console.log('onHandleConfig - esdocPluginDir: ' +esdocPluginDir);
 console.log('onHandleConfig - nodeModuleDir: ' +nodeModuleDir);
 console.log('onHandleConfig - rootDir: ' +rootDir);
