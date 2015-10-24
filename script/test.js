@@ -6,7 +6,7 @@ var mochaOption=" -t 10000 --recursive ./test/src -R spec";
 if (process.env.TRAVIS)
 {
    sh.exec('./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly -- ' +mochaOption
-    +' && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js');
+    +' && cat ./coverage/lcov.info | ./node_modules/codecov.io/bin/codecov.io.js');
 }
 else if(process.argv.indexOf('--coverage') !== -1)
 {
