@@ -1,0 +1,50 @@
+{
+  "name": "esdoc-plugin-jspm",
+  "version": "0.0.1",
+  "homepage": "https://github.com/typhonjs/esdoc-plugin-jspm/",
+  "description": "A plugin for ESDoc making it SystemJS / JSPM aware",
+  "license": "MIT",
+  "author": {
+     "name": "Mike Leahy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/typhonjs/esdoc-plugin-jspm/esdoc-plugin-jspm.git"
+  },
+  "maintainers": [
+    {
+      "name": "Mike Leahy",
+      "email": "support@js.typhonrt.org"
+    }
+  ],
+  "dependencies": {
+    "jspm": "^0.16.13"
+  },
+  "jspm": {
+    "main": false,
+    "dependencies": {
+      "backbone-es6": "github:typhonjs/backbone-es6@master"
+    }
+  },
+  "keywords": [
+    "esdoc",
+    "jsdoc",
+    "jspm",
+    "systemjs",
+    "plugin",
+    "document",
+    "documentation",
+    "ES6",
+    "ES2015",
+    "ECMAScript6",
+    "ECMAScript2015"
+  ],
+  "main": "plugin.js",
+  "files": [
+    "plugin.js"
+  ],
+  "directories": {},
+  "bugs": {
+    "url": "https://github.com/typhonjs/esdoc-plugin-jspm/issues"
+  }
+}
