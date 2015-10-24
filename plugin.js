@@ -1,17 +1,37 @@
 /**
- * esdoc-jspm-plugin.js -- Provides support for JSPM packages adding them to ESDoc based on path substitution.
+ * esdoc-plugin-jspm -- Provides support for JSPM packages adding them to ESDoc based on path substitution allowing
+ * end to end documentation when using SystemJS / JSPM.
  *
- * As things go since ESDoc plugins can't perform asynchronous operations a two part setup is necessary. In this case
- * Gulp is used to preprocess the esdoc-jspm.json config file which contains a "jspm" section indicating which
- * JSPM packages are to be resolved. Here is an example entry:
+ * Please refer to this repo that is using this plugin to generate documentation:
+ * https://github.com/typhonjs/backbone-parse-es6
  *
- *    "jspm": {
- *       "packages": ["backbone-es6", "backbone-parse-es6"]
- *     },
+ * This is the esdoc.json configuration file for the above repo:
+ * {
+ *    "title": "Backbone-Parse-ES6",
+ *    "source": "src",
+ *    "destination": "docs",
+ *    "plugins":
+ *    [
+ *       {
+ *          "name": "esdoc-plugin-jspm",
+ *          "option":
+ *          {
+ *             "packages": ["backbone-es6"]
+ *          }
+ *       }
+ *    ]
+ * }
  *
- * The preprocessor in Gulp will attempt to resolve normalized paths using SystemJS and will add additional data to
- * the esdoc-jspm.json config file with the normalized paths. Also included is the full path from the OS root to
- * the actual locations of the JSPM normalized paths.
+ * Note that you must supply an `option` entry with `packages` array that indicates which JSPM managed modules to
+ * link with the main source indicated by the `source` entry.
+ *
+ * Each JSPM managed package must also have a valid esdoc.json file at it's root that at minimum has a `source` entry
+ * so that these sources may be included.
+ *
+ * Since ESDoc only works with one source root this plugin rewrites in `onHandleConfig` the source root to the parent
+ * directory to `.` and builds an `includes` array that includes the original "source" value in addition to normalized
+ * paths to the linked JSPM packages. Therefore be aware that you can not use "includes" in your esdoc.json
+ * configuration.
  *
  * In the `onHandleConfig` method below further construction of all resources necessary in code, import, and search
  * processing are constructed.
@@ -48,10 +68,6 @@ exports.onStart = function(ev)
 {
    option = ev.data.option || {};
    option.packages = option.packages || [];
-
-   var parsedPath = path.parse('.');
-
-   console.log("onStart - parsedPath: " +JSON.stringify(parsedPath) +"\n");
 };
 
 /**
@@ -64,18 +80,15 @@ exports.onStart = function(ev)
  */
 exports.onHandleConfig = function(ev)
 {
-console.log('onHandleConfig - 0 - packagePath: ' +packagePath);
-
    if (ev.data.config.package)
    {
       packagePath = ev.data.config.package;
    }
 
-console.log('onHandleConfig - 1 - packagePath: ' +packagePath);
-
-   // get package.json
+   // Get package.json as ESDoc will prepend the name of the module found in the package.json
    var rootPackageName = undefined;
    var mainPath = '';
+
    try
    {
       var packageJSON = fs.readFileSync(packagePath).toString();
@@ -91,11 +104,10 @@ console.log('onHandleConfig - 1 - packagePath: ' +packagePath);
       // ignore
    }
 
-console.log('onHandleConfig - rootPackageName: ' +rootPackageName);
-console.log('onHandleConfig - mainPath: ' +mainPath);
-
+   // Create SystemJS Loader
    var System = new jspm.Loader();
 
+   // Store destination for sources and create the path to <doc destination>/script/search_index.js
    docDestination = ev.data.config.destination;
    docSearchScript = docDestination + path.sep +'script' +path.sep +'search_index.js';
 
@@ -104,70 +116,70 @@ console.log('onHandleConfig - mainPath: ' +mainPath);
 
    ev.data.config.source = '.';
 
-//var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm';
-
    // __dirname is the node_modules/esdoc-plugin-jspm directory
    var rootPath = __dirname;
-//   var rootPath = testDirname;
 
+   // The root path / parent below node_modules must be found.
    var splitDirPath = rootPath.split(path.sep);
-//   var splitDirPath = testDirname.split(path.sep);
 
    // Pop the top two directories
    var esdocPluginDir = splitDirPath.pop();
    var nodeModuleDir = splitDirPath.pop();
 
-   // Set the actual root path
+   // Set the actual root path if everything looks correct
    if (esdocPluginDir === 'esdoc-plugin-jspm' && nodeModuleDir === 'node_modules')
    {
       rootPath = splitDirPath.join(path.sep);
    }
 
+   // ESDoc uses the root directory name if no package.json with a package name exists.
    var rootDir = splitDirPath.pop();
 
    rootPackageName = rootPackageName || rootDir;
 
-console.log('onHandleConfig - __dirname: ' +__dirname);
-//console.log('onHandleConfig - testDirname: ' +testDirname);
-console.log('onHandleConfig - esdocPluginDir: ' +esdocPluginDir);
-console.log('onHandleConfig - nodeModuleDir: ' +nodeModuleDir);
-console.log('onHandleConfig - rootDir: ' +rootDir);
-console.log('onHandleConfig - rootPath: ' +rootPath);
-
+   // Stores the normalized paths and data from all JSPM lookups.
    var normalizedData = [];
 
    for (var cntr = 0; cntr < option.packages.length; cntr++)
    {
+      // The package name found in option -> packages.
       var packageName = option.packages[cntr];
+
+      // The normalized file URL from SystemJS Loader.
       var normalized = System.normalizeSync(packageName);
-console.log("\nonHandleConfig - packageName: " +packageName +"; normalized: " +normalized);
 
       // Only process valid JSPM packages
       if (normalized.indexOf('jspm_packages') >= 0)
       {
+         // Parse the file URL.
          var parsedPath = path.parse(url.parse(normalized).pathname);
-         var fullPath = parsedPath.dir +path.sep +parsedPath.name;
-         var relativePath = path.relative(rootPath, parsedPath.dir) +path.sep +parsedPath.name;
 
-console.log('onHandleConfig - parsedPath: ' +JSON.stringify(parsedPath));
-console.log('onHandleConfig - fullPath: ' +fullPath);
-console.log('onHandleConfig - relativePath: ' +relativePath);
+         // Full path to the JSPM package
+         var fullPath = parsedPath.dir +path.sep +parsedPath.name;
+
+         // Relative path from the rootPath to the JSPM package.
+         var relativePath = path.relative(rootPath, parsedPath.dir) +path.sep +parsedPath.name;
 
          try
          {
             // Lookup JSPM package esdoc.json to pull out the source location.
             var packageESDocConfig = require(fullPath +path.sep +'esdoc.json');
+
+            // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
             relativePath += path.sep + packageESDocConfig.source;
+
+            // Add to the JSPM package full path the location of the sources defined in it's esdoc.json config.
             fullPath += path.sep + packageESDocConfig.source;
 
+            // Save the normalized data.
             normalizedData.push(
-             {
-                packageName: packageName,
-                jspmFullPath: fullPath,
-                jspmPath: relativePath,
-                normalizedPath: packageName +path.sep +packageESDocConfig.source,
-                source: packageESDocConfig.source
-             });
+            {
+               packageName: packageName,
+               jspmFullPath: fullPath,
+               jspmPath: relativePath,
+               normalizedPath: packageName +path.sep +packageESDocConfig.source,
+               source: packageESDocConfig.source
+            });
          }
          catch(err)
          {
@@ -179,7 +191,7 @@ console.log('onHandleConfig - relativePath: ' +relativePath);
    var packageData = normalizedData || [];
    var regex;
 
-   // Process include paths --------------------------------------------------------------------------------------
+   // Process include paths -----------------------------------------------------------------------------------------
 
    // Include the source root of this repos code.
    var includes = ['^' +localSrcRoot];
@@ -195,9 +207,7 @@ console.log('onHandleConfig - relativePath: ' +relativePath);
 
    ev.data.config.includes = includes;
 
-console.log('onHandleConfig - includes: ' +JSON.stringify(includes));
-
-   // Process code import replacements ---------------------------------------------------------------------------
+   // Process code import replacements ------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
@@ -206,7 +216,7 @@ console.log('onHandleConfig - includes: ' +JSON.stringify(includes));
       codeReplace.push({ from: regex, to: packageData[cntr].jspmFullPath });
    }
 
-   // Process source code import replacements --------------------------------------------------------------------
+   // Process source code import replacements -----------------------------------------------------------------------
 
    // Create import replacements.
    var wrongImportBase = rootPackageName +path.sep +rootDir +path.sep;
@@ -225,7 +235,7 @@ console.log('onHandleConfig - includes: ' +JSON.stringify(includes));
       importReplace.push({ from: wrongImport, to: actualImport });
    }
 
-   // Process HTML replacements ----------------------------------------------------------------------------------
+   // Process HTML replacements -------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
@@ -237,7 +247,7 @@ console.log('onHandleConfig - includes: ' +JSON.stringify(includes));
       htmlReplace.push({ from: regex, to: '>' +packageData[cntr].normalizedPath });
    }
 
-   // Process HTML replacements ----------------------------------------------------------------------------------
+   // Process search index replacements -----------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
@@ -253,8 +263,8 @@ console.log('onHandleConfig - includes: ' +JSON.stringify(includes));
  *
  * @param ev
  */
-exports.onHandleCode = function(ev) {
-
+exports.onHandleCode = function(ev)
+{
    for (var cntr = 0; cntr < codeReplace.length; cntr++)
    {
       (function(codeReplace)
@@ -271,8 +281,8 @@ exports.onHandleCode = function(ev) {
 
 /**
  * Since the source root is "." / the base root of the repo ESDoc currently creates the wrong import path, so they
- * need to be corrected. ESDoc fabricates "<base root>/<base root>" when we want just "<base root>/" for the local
- * project code. For the JSPM packages the import statement is "<base root>/<base root>/<JSPM path>" where
+ * need to be corrected. ESDoc fabricates "<package name>/<base root>" when we want just "<package name>/" for the local
+ * project code. For the JSPM packages the import statement is "<package name>/<base root>/<JSPM path>" where
  * the desired path is the just the normalized JSPM path to the associated package.
  *
  * @param {object}   ev - Event from ESDoc containing data field
