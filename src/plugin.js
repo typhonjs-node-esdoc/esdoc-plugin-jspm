@@ -107,25 +107,27 @@ exports.onHandleConfig = function(ev)
 
    ev.data.config.source = '.';
 
-   //// __dirname is the node_modules/esdoc-plugin-jspm directory
-   //var rootPath = __dirname;
-   //
-   //// The root path / parent below node_modules must be found.
-   //var splitDirPath = rootPath.split(path.sep);
-
-var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm/src';
-
    // __dirname is the node_modules/esdoc-plugin-jspm directory
-   var rootPath = testDirname;
+   var rootPath = __dirname;
 
-   var splitDirPath = testDirname.split(path.sep);
+   // The root path / parent below node_modules must be found.
+   var splitDirPath = rootPath.split(path.sep);
+
+//TEST var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm/src';
+
+//TEST   //// __dirname is the node_modules/esdoc-plugin-jspm directory
+   //var rootPath = testDirname;
+   //
+   //var splitDirPath = testDirname.split(path.sep);
 
    var pluginSrcDir, esdocPluginDir, nodeModuleDir;
 
-process.env.TRAVIS = true;
+//TESTprocess.env.TRAVIS = true;
 
    if (process.env.TRAVIS)
    {
+console.log("ESDOC on Travis path!");
+
       // Pop the top two directories
       pluginSrcDir = splitDirPath.pop();
 
@@ -255,7 +257,7 @@ console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
             {
                throw new Error("full path generated '" +fullPath +"' does not exist");
             }
-
+//TEST fullPath = '/Volumes/Data/program/web/projects/TyphonJS/repos/esdoc-plugin-jspm/jspm_packages/github/typhonjs/backbone-es6@master/src';
             // Save the normalized data.
             normalizedData.push(
             {
@@ -279,6 +281,11 @@ console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
           +"' as it does not appear to be a JSPM package.");
       }
    }
+
+for (cntr = 0; cntr < normalizedData.length; cntr++)
+{
+   console.log("esdoc-plugin-jspm - normalizedData - " +cntr +" - data: " +JSON.stringify(normalizedData[cntr]));
+}
 
    var packageData = normalizedData || [];
    var regex;

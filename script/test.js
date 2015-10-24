@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var sh = require('./sh');
 
-var mochaOption=" -t 10000 --recursive ./test -R spec";
+var mochaOption=" -t 10000 --recursive ./test/src -R spec";
 
 if (process.env.TRAVIS)
 {

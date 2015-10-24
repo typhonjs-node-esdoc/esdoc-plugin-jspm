@@ -1,0 +1,7 @@
+language: node_js
+node_js:
+  - "4.1"
+before_script:
+  - npm install -g jspm
+  - jspm install
+script: - TRAVIS=1 npm run test

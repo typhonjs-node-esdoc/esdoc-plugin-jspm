@@ -1,8 +1,6 @@
-var fs         = require('fs');
+var fs         = require('fs-extra');
 var ESDoc      = require('../../node_modules/esdoc/out/src/ESDoc.js');
 var publisher  = require('../../node_modules/esdoc/out/src/Publisher/publish.js');
-
-console.log("000Init - __dirname: " +__dirname);
 
 var config = {
    source: './test/fixture',
@@ -21,7 +19,12 @@ var config = {
 
 if (fs.existsSync(config.destination))
 {
-   fs.rmdirSync(config.destination);
+   fs.removeSync(config.destination);
 }
 
-//ESDoc.generate(config, publisher);
+if (fs.existsSync('./coverage'))
+{
+   fs.removeSync('./coverage');
+}
+
+ESDoc.generate(config, publisher);
