@@ -88,19 +88,14 @@ exports.onHandleConfig = function(ev)
 
    // Get package.json as ESDoc will prepend the name of the module found in the package.json
    var rootPackageName = undefined;
-   var mainPath = '';
 
    try
    {
       var packageJSON = fs.readFileSync(packagePath).toString();
       var packageObj = JSON.parse(packageJSON);
       rootPackageName = packageObj.name;
-      if (packageObj.main)
-      {
-         mainPath = packageObj.main;
-      }
    }
-   catch (e)
+   catch(err)
    {
       // ignore
    }
@@ -141,6 +136,12 @@ exports.onHandleConfig = function(ev)
 
    // Stores the normalized paths and data from all JSPM lookups.
    var normalizedData = [];
+
+   if (option.packages.length <= 0)
+   {
+      console.log(
+       "esdoc-plugin-jspm Warning: no JSPM packages specified or missing 'option' -> 'packages' data.");
+   }
 
    for (var cntr = 0; cntr < option.packages.length; cntr++)
    {
