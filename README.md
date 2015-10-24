@@ -18,7 +18,7 @@ Installation steps:
 - Add an `esdoc.json` configuration file in all JSPM managed packages to link.
 - Run ESdoc then profit!
 
-For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html)
+For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
 Please see the [Backbone-Parse-ES6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using ESdoc-Plugin-JSPM. 
 
@@ -91,6 +91,8 @@ gulp.task('docs', function()
 ```
 
 For a complete demo with instructions on how to use Backbone-Parse-ES6 (Backbone + Parse 1.6+) with SystemJS / JSPM see the [Backbone-Parse-ES6-Demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp and ESDoc is covered. 
+
+It should be noted that ESDoc-Plugin-JSPM uses the `includes` ESDoc configuration and will overwrite any `includes` stored in `esdoc.json`.  
 
 Currently the [ESDoc Hosting Service](https://doc.esdoc.org/) isn't JSPM / SystemJS aware, so docs will have to be generated locally and hosted independently.
 
