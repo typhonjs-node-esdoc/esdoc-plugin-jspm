@@ -1,4 +1,4 @@
-![Esdoc-Plugin-JSPM](http://i.imgur.com/YvRySLl.png)
+![Esdoc-Plugin-JSPM](http://i.imgur.com/1TsbnX2.png)
 
 [![NPM](https://img.shields.io/npm/v/esdoc-plugin-jspm.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-jspm)
 [![Code Style](https://img.shields.io/badge/code%20style-allman-yellowgreen.svg?style=flat)](https://en.wikipedia.org/wiki/Indent_style#Allman_style)
