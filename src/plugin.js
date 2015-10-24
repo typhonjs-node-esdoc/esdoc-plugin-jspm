@@ -107,34 +107,73 @@ exports.onHandleConfig = function(ev)
 
    ev.data.config.source = '.';
 
+   //// __dirname is the node_modules/esdoc-plugin-jspm directory
+   //var rootPath = __dirname;
+   //
+   //// The root path / parent below node_modules must be found.
+   //var splitDirPath = rootPath.split(path.sep);
+
+var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm/src';
+
    // __dirname is the node_modules/esdoc-plugin-jspm directory
-   var rootPath = __dirname;
+   var rootPath = testDirname;
 
-   // The root path / parent below node_modules must be found.
-   var splitDirPath = rootPath.split(path.sep);
+   var splitDirPath = testDirname.split(path.sep);
 
-   // Pop the top two directories
-   var pluginSrcDir = splitDirPath.pop();
-   var esdocPluginDir = splitDirPath.pop();
-   var nodeModuleDir = splitDirPath.pop();
+   var pluginSrcDir, esdocPluginDir, nodeModuleDir;
 
-   // Set the actual root path if everything looks correct
-   if (pluginSrcDir === 'src' && esdocPluginDir === 'esdoc-plugin-jspm' && nodeModuleDir === 'node_modules')
+process.env.TRAVIS = true;
+
+   if (process.env.TRAVIS)
    {
-      rootPath = splitDirPath.join(path.sep);
+      // Pop the top two directories
+      pluginSrcDir = splitDirPath.pop();
 
-      // Verify that a JSPM config.js file exists in target root directory
-      if (!fs.existsSync(rootPath +path.sep +'config.js'))
+      // Set the actual root path if everything looks correct
+      if (pluginSrcDir === 'src')
       {
-         console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+         rootPath = splitDirPath.join(path.sep);
+
+console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
+         // Verify that a JSPM config.js file exists in target root directory
+         if (!fs.existsSync(rootPath +path.sep +'config.js'))
+         {
+            console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            throw new Error();
+         }
+      }
+      else
+      {
+         console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
          throw new Error();
       }
    }
    else
    {
-      console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
-      throw new Error();
+      // Pop the top three directories
+      pluginSrcDir = splitDirPath.pop();
+      esdocPluginDir = splitDirPath.pop();
+      nodeModuleDir = splitDirPath.pop();
+
+      // Set the actual root path if everything looks correct
+      if (pluginSrcDir === 'src' && esdocPluginDir === 'esdoc-plugin-jspm' && nodeModuleDir === 'node_modules')
+      {
+         rootPath = splitDirPath.join(path.sep);
+
+         // Verify that a JSPM config.js file exists in target root directory
+         if (!fs.existsSync(rootPath +path.sep +'config.js'))
+         {
+            console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            throw new Error();
+         }
+      }
+      else
+      {
+         console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+         throw new Error();
+      }
    }
+
 
    var localSrcFullPath = rootPath +path.sep +localSrcRoot;
 
