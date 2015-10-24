@@ -167,11 +167,23 @@ exports.onHandleConfig = function(ev)
             // Lookup JSPM package esdoc.json to pull out the source location.
             var packageESDocConfig = require(fullPath +path.sep +'esdoc.json');
 
+            // Verify that the JSPM package esdoc.json has a source entry.
+            if (typeof packageESDocConfig.source !== 'string')
+            {
+               throw new Error("'esdoc.json' does not have a valid 'source' entry");
+            }
+
             // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
             relativePath += path.sep + packageESDocConfig.source;
 
             // Add to the JSPM package full path the location of the sources defined in it's esdoc.json config.
             fullPath += path.sep + packageESDocConfig.source;
+
+            // Verify that the full path to the JSPM package source exists.
+            if (!fs.existsSync(fullPath))
+            {
+               throw new Error("full path generated '" +fullPath +"' does not exist");
+            }
 
             // Save the normalized data.
             normalizedData.push(
@@ -182,11 +194,18 @@ exports.onHandleConfig = function(ev)
                normalizedPath: packageName +path.sep +packageESDocConfig.source,
                source: packageESDocConfig.source
             });
+
+            console.log("esdoc-plugin-jspm linked JSPM package '" +packageName +"' to: " +relativePath);
          }
          catch(err)
          {
-            console.log('onHandleConfig - failed to require JSPM package esdoc.json for: ' +packageName);
+            console.log("esdoc-plugin-jspm " +err +" for JSPM package '" +packageName +"'");
          }
+      }
+      else
+      {
+         console.log("esdoc-plugin-jspm Warning: skipping '" +packageName
+          +"' as it does not appear to be a JSPM package.");
       }
    }
 
