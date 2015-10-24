@@ -8,7 +8,7 @@
 [![Build Status](https://img.shields.io/codecov/c/github/codecov/example-python.svg)](https://codecov.io/github/typhonjs/esdoc-plugin-jspm)
 [![Dependency Status](https://www.versioneye.com/user/projects/562b368236d0ab0019001056/badge.svg?style=flat)](https://www.versioneye.com/user/projects/562b368236d0ab0019001056)
 
-A plugin for [ESDoc](https://esdoc.org) that enables end to end Javascript ES6 documentation linking [JSPM](http://jspm.io) / [SystemJS](https://github.com/systemjs/systemjs) managed packages in addition to a source root. This allows creating comprehensive documentation that includes JS managed by JSPM / SystemJS. 
+A plugin for [ESDoc](https://esdoc.org) that enables end to end Javascript ES6 documentation linking [JSPM](http://jspm.io) / [SystemJS](https://github.com/systemjs/systemjs) managed packages in addition to a local source root. This allows creating comprehensive documentation that includes JS managed by JSPM / SystemJS. 
 
 Installation steps:
 - Install `esdoc` or `gulp-esdoc` as a `devDependency` in `package.json`.
@@ -22,7 +22,7 @@ For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html)
 
 Please see the [Backbone-Parse-ES6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using ESdoc-Plugin-JSPM. 
 
-Example from Backbone-Parse-ES6 (package.json)[https://github.com/typhonjs/backbone-parse-es6/blob/master/package.json]:
+Example from Backbone-Parse-ES6 [package.json](https://github.com/typhonjs/backbone-parse-es6/blob/master/package.json):
 
 ```
 {
@@ -73,7 +73,7 @@ For the example above the local source root is `src` and the ESDoc documentation
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
 
-You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes ESDoc:
+You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes Gulp-ESDoc:
 
 ```
 /**
