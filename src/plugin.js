@@ -54,7 +54,7 @@ var codeReplace = [];
 // Stores all from -> to strings to replace to run against ES6 import statements.
 var importReplace = [];
 
-// Stores all RegExp for JSPM packages to run against generated HTML replacing normalized paths.
+// Stores all RegExp for JSPM packages to run against generated HTML replacing non-normalized paths.
 var htmlReplace = [];
 
 // Stores all from -> to strings to replace for JSPM packages in generated search script data.
@@ -113,21 +113,12 @@ exports.onHandleConfig = function(ev)
    // The root path / parent below node_modules must be found.
    var splitDirPath = rootPath.split(path.sep);
 
-//TEST var testDirname = '/Volumes/Data/program/web/projects/TyphonJS/repos/typhon-backbone-parse/node_modules/esdoc-plugin-jspm/src';
-
-//TEST   //// __dirname is the node_modules/esdoc-plugin-jspm directory
-   //var rootPath = testDirname;
-   //
-   //var splitDirPath = testDirname.split(path.sep);
-
    var pluginSrcDir, esdocPluginDir, nodeModuleDir;
 
-//TESTprocess.env.TRAVIS = true;
-
+   // If running on Travis CI the plugin.js is invoked directly, so the directory structure is different.
+   // than running from the installed node_modules location.
    if (process.env.TRAVIS)
    {
-console.log("ESDOC on Travis path!");
-
       // Pop the top two directories
       pluginSrcDir = splitDirPath.pop();
 
@@ -136,7 +127,6 @@ console.log("ESDOC on Travis path!");
       {
          rootPath = splitDirPath.join(path.sep);
 
-console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
          // Verify that a JSPM config.js file exists in target root directory
          if (!fs.existsSync(rootPath +path.sep +'config.js'))
          {
@@ -189,7 +179,7 @@ console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
    localSrcRoot = localSrcRoot.replace(new RegExp('^\.' +(path.sep === '\\' ? '\\' +path.sep : path.sep)), '');
 
    console.log("esdoc-plugin-jspm - Info: operating in root path: '" +rootPath +"'");
-   console.log("esdoc-plugin-jspm - Info: linking local source root: '" +localSrcRoot +"'");
+   console.log("esdoc-plugin-jspm - Info: linked local source root: '" +localSrcRoot +"'");
 
    // Set the package path to the local root where config.js is located.
    jspm.setPackagePath(rootPath);
@@ -257,7 +247,7 @@ console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
             {
                throw new Error("full path generated '" +fullPath +"' does not exist");
             }
-//TEST fullPath = '/Volumes/Data/program/web/projects/TyphonJS/repos/esdoc-plugin-jspm/jspm_packages/github/typhonjs/backbone-es6@master/src';
+
             // Save the normalized data.
             normalizedData.push(
             {
@@ -281,11 +271,6 @@ console.log("esdoc-plugin-jspm - rootPath: " +rootPath);
           +"' as it does not appear to be a JSPM package.");
       }
    }
-
-for (cntr = 0; cntr < normalizedData.length; cntr++)
-{
-   console.log("esdoc-plugin-jspm - normalizedData - " +cntr +" - data: " +JSON.stringify(normalizedData[cntr]));
-}
 
    var packageData = normalizedData || [];
    var regex;

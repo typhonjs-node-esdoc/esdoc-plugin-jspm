@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+
+/**
+ * test -- Initiates the testing cycle and sets `./test/src` as the files to execute. Istanbul is used for code
+ * coverage and tests are run with Mocha and results are uploaded to Codecov.io
+ */
+
 var sh = require('./sh');
 
 var mochaOption=" -t 10000 --recursive ./test/src -R spec";

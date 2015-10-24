@@ -1,3 +1,9 @@
+/**
+ * A helpful wrapper fo basic fs / fs-extra commands.
+ *
+ * @type {fse|exports|module.exports}
+ */
+
 var fs = require('fs-extra');
 var path = require('path');
 var child_process = require('child_process');
