@@ -4,4 +4,5 @@ node_js:
 before_script:
   - npm install -g jspm
   - jspm install
-script: - TRAVIS=1 npm run test
+script:
+  - TRAVIS=1 npm run test
