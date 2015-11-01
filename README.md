@@ -103,6 +103,6 @@ To suggest a feature or report a bug: https://github.com/typhonjs/esdoc-plugin-j
 
 Many thanks to the ESDoc community for creating a valuable documentation tool. 
 
-esdoc-plugin-es6 (c) 2015-present Michael Leahy, TyphonRT, Inc.
+esdoc-plugin-jspm (c) 2015-present Michael Leahy, TyphonRT, Inc.
 
-esdoc-plugin-es6 may be freely distributed under the MIT license.
+esdoc-plugin-jspm may be freely distributed under the MIT license.
