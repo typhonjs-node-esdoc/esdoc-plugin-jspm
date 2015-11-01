@@ -20,11 +20,11 @@ Installation steps:
 
 For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
-Please see [typhon-core-gulptasks](https://www.npmjs.com/package/typhon-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks including ESDoc generation and `esdoc-plugin-jspm` support.
+As an alternate installation process please see [typhon-core-gulptasks](https://www.npmjs.com/package/typhon-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` support.
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhon-core-gulptasks`. 
 
-If installing and working directly with `esdoc-plugin-jspm` the following is an example integration:
+If installing and working directly with `esdoc-plugin-jspm` the following is an example integration for `package.json`:
 ```
 {
   ...
@@ -89,7 +89,7 @@ gulp.task('docs', function()
 });
 ```
 
-For a complete demo with instructions on how to use `backbone-parse-es6` (Backbone + Parse 1.6+) with SystemJS / JSPM see the [backbone-parse-es6-demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp and ESDoc is covered. 
+For a complete demo with instructions on how to use `backbone-parse-es6` (Backbone + Parse 1.6+) with SystemJS / JSPM see the [backbone-parse-es6-demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp, ESLint and ESDoc is covered. 
 
 It should be noted that `esdoc-plugin-jspm` uses the `includes` ESDoc configuration parameter and will overwrite any `includes` top level entry stored in `esdoc.json`.  
 
