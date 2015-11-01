@@ -57,7 +57,8 @@
   ],
   "main": "src/plugin.js",
   "files": [
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "directories": {},
   "bugs": {
