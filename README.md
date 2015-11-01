@@ -1,4 +1,4 @@
-![ESdoc-Plugin-JSPM](http://i.imgur.com/1TsbnX2.png)
+![esdoc-plugin-jspm](http://i.imgur.com/1TsbnX2.png)
 
 [![NPM](https://img.shields.io/npm/v/esdoc-plugin-jspm.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-jspm)
 [![Code Style](https://img.shields.io/badge/code%20style-allman-yellowgreen.svg?style=flat)](https://en.wikipedia.org/wiki/Indent_style#Allman_style)
@@ -11,8 +11,8 @@
 A plugin for [ESDoc](https://esdoc.org) that enables end to end Javascript ES6 documentation linking [JSPM](http://jspm.io) / [SystemJS](https://github.com/systemjs/systemjs) managed packages in addition to a local source root. This allows creating comprehensive documentation that includes JS managed by JSPM / SystemJS. 
 
 Installation steps:
-- Install `esdoc` or `gulp-esdoc` as a `devDependency` in `package.json`.
-- Install `esdoc-plugin-jspm` as a `devDependency` in `package.json`.
+- Install `esdoc` or `gulp-esdoc` in `devDependencies` in `package.json`.
+- Install `esdoc-plugin-jspm` in `devDependencies` in `package.json`.
 - Create an `esdoc.json` configuration file adding the plugin.
 - Add `option` -> `packages` data listing the JSPM packages to link.
 - Add an `esdoc.json` configuration file in all JSPM managed packages to link.
@@ -20,19 +20,18 @@ Installation steps:
 
 For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
-Please see the [Backbone-Parse-ES6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using ESdoc-Plugin-JSPM. 
+As an alternate installation process please see [typhon-core-gulptasks](https://www.npmjs.com/package/typhon-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` support.
 
-Example from Backbone-Parse-ES6 [package.json](https://github.com/typhonjs/backbone-parse-es6/blob/master/package.json):
+Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhon-core-gulptasks`. 
 
+If installing and working directly with `esdoc-plugin-jspm` the following is an example integration for `package.json`:
 ```
 {
-  "name": "backbone-parse-es6",
-
-  ....
+  ...
 
   "devDependencies": {
-    "esdoc-plugin-jspm": "^0.1.0",
-    "jspm": "^0.16.13",
+    "esdoc-plugin-jspm": "^0.2.0",
+    "jspm": "^0.16.14",
     "gulp": "^3.9.0",
     "gulp-esdoc": "^0.1.0",
   },
@@ -53,7 +52,7 @@ And the [esdoc.json](https://github.com/typhonjs/backbone-parse-es6/blob/master/
 
 ```
 {
-   "title": "Backbone-Parse-ES6",
+   "title": "<title>",
    "source": "src",
    "destination": "docs",
    "plugins":
@@ -73,7 +72,7 @@ For the example above the local source root is `src` and the ESDoc documentation
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
 
-You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes Gulp-ESDoc:
+You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes gulp-esdoc:
 
 ```
 /**
@@ -90,20 +89,20 @@ gulp.task('docs', function()
 });
 ```
 
-For a complete demo with instructions on how to use Backbone-Parse-ES6 (Backbone + Parse 1.6+) with SystemJS / JSPM see the [Backbone-Parse-ES6-Demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp and ESDoc is covered. 
+For a complete demo with instructions on how to use `backbone-parse-es6` (Backbone + Parse 1.6+) with SystemJS / JSPM see the [backbone-parse-es6-demo](https://github.com/typhonjs/backbone-parse-es6-demo) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp, ESLint and ESDoc is covered. 
 
-It should be noted that ESDoc-Plugin-JSPM uses the `includes` ESDoc configuration and will overwrite any `includes` stored in `esdoc.json`.  
+It should be noted that `esdoc-plugin-jspm` uses the `includes` ESDoc configuration parameter and will overwrite any `includes` top level entry stored in `esdoc.json`.  
 
 Currently the [ESDoc Hosting Service](https://doc.esdoc.org/) isn't JSPM / SystemJS aware, so docs will have to be generated locally and hosted independently.
 
-Check out the docs for [Backbone-Parse-ES6](http://js.typhonrt.org/docs/backbone-parse-es6/) and notice that when viewing [ParseCollection](http://js.typhonrt.org/docs/backbone-parse-es6/class/backbone-parse-es6/src/ParseCollection.js~ParseCollection.html) that it properly contains links to the inheriting class from a JSPM package ([Backbone-ES6](https://github.com/typhonjs/backbone-es6)) and also contains an `Inherited Summary` section for Collection & Event which is in the inheritance structure. 
+Check out the docs for [backbone-parse-es6](http://js.typhonrt.org/docs/backbone-parse-es6/) and notice that when viewing [ParseCollection](http://js.typhonrt.org/docs/backbone-parse-es6/class/backbone-parse-es6/src/ParseCollection.js~ParseCollection.html) that it properly contains links to the inheriting class from a JSPM package ([backbone-es6](https://github.com/typhonjs/backbone-es6)) and also contains an `Inherited Summary` section for Collection & Event which is in the inheritance structure. 
 
-Without using ESDoc-Plugin-ES6 the output only contains the local source. See the version of [ParseCollection](https://doc.esdoc.org/github.com/typhonjs/backbone-parse-es6/class/src/ParseCollection.js~ParseCollection.html) on the ESDoc hosting service for a comparison.
+Without using `esdoc-plugin-jspm` the output only contains the local source. See the version of [ParseCollection](https://doc.esdoc.org/github.com/typhonjs/backbone-parse-es6/class/src/ParseCollection.js~ParseCollection.html) on the ESDoc hosting service for a comparison.
 
 To suggest a feature or report a bug: https://github.com/typhonjs/esdoc-plugin-jspm/issues
 
 Many thanks to the ESDoc community for creating a valuable documentation tool. 
 
-ESDoc-Plugin-ES6 (c) 2015-present Michael Leahy, TyphonRT, Inc.
+esdoc-plugin-jspm (c) 2015-present Michael Leahy, TyphonRT, Inc.
 
-ESDoc-Plugin-ES6 may be freely distributed under the MIT license.
+esdoc-plugin-jspm may be freely distributed under the MIT license.
