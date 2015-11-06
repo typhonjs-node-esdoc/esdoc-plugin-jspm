@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-jspm",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "homepage": "https://github.com/typhonjs/esdoc-plugin-jspm/",
   "description": "A plugin for ESDoc making it SystemJS / JSPM aware.",
   "license": "MIT",
@@ -22,11 +22,14 @@
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",
-    "esdoc": "^0.4.2",
+    "esdoc": "^0.4.3",
     "fs-extra": "^0.26.0",
+    "gulp": "^3.9.0",
     "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
-    "power-assert": "^1.1.0"
+    "power-assert": "^1.1.0",
+    "typhonjs-config-eslint": "^0.2.0",
+    "typhonjs-core-gulptasks": "^0.1.1"
   },
   "scripts": {
     "test": "node ./script/test.js"

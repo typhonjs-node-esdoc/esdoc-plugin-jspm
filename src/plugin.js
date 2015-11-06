@@ -71,7 +71,7 @@ var option;
 /**
  * Stores the option data from the plugin configuration and provides empty defaults as necessary.
  *
- * @param ev
+ * @param {object}   ev - Event from ESDoc containing data field.
  */
 exports.onStart = function(ev)
 {
@@ -85,7 +85,7 @@ exports.onStart = function(ev)
  *
  * Also all RegExp instances are created and stored for later usage.
  *
- * @param {object}   ev - Event from ESDoc containing data field
+ * @param {object}   ev - Event from ESDoc containing data field.
  */
 exports.onHandleConfig = function(ev)
 {
@@ -110,8 +110,8 @@ exports.onHandleConfig = function(ev)
 
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
    docDestination = ev.data.config.destination;
-   docGitIgnore = docDestination + path.sep +'.gitignore';
-   docSearchScript = docDestination + path.sep +'script' +path.sep +'search_index.js';
+   docGitIgnore = docDestination + path.sep + '.gitignore';
+   docSearchScript = docDestination + path.sep + 'script' + path.sep + 'search_index.js';
 
    // The source root is rewritten, so save the current value.
    var localSrcRoot = ev.data.config.source;
@@ -120,19 +120,19 @@ exports.onHandleConfig = function(ev)
 
    var rootPath = findRootPath(ev.data.config);
 
-   var localSrcFullPath = rootPath +path.sep +localSrcRoot;
+   var localSrcFullPath = rootPath + path.sep + localSrcRoot;
 
    if (!fs.existsSync(localSrcFullPath))
    {
-      console.log("esdoc-plugin-jspm - Error: could not locate local source path: '" +localSrcFullPath +"'");
+      console.log("esdoc-plugin-jspm - Error: could not locate local source path: '" + localSrcFullPath + "'");
       throw new Error();
    }
 
    // Remove an leading local directory string
-   localSrcRoot = localSrcRoot.replace(new RegExp('^\.' +(path.sep === '\\' ? '\\' +path.sep : path.sep)), '');
+   localSrcRoot = localSrcRoot.replace(new RegExp('^\.' + (path.sep === '\\' ? '\\' + path.sep : path.sep)), '');
 
-   console.log("esdoc-plugin-jspm - Info: operating in root path: '" +rootPath +"'");
-   console.log("esdoc-plugin-jspm - Info: linked local source root: '" +localSrcRoot +"'");
+   console.log("esdoc-plugin-jspm - Info: operating in root path: '" + rootPath + "'");
+   console.log("esdoc-plugin-jspm - Info: linked local source root: '" + localSrcRoot + "'");
 
    // Set the package path to the local root where config.js is located.
    jspm.setPackagePath(rootPath);
@@ -169,15 +169,15 @@ exports.onHandleConfig = function(ev)
          var parsedPath = path.parse(url.parse(normalized).pathname);
 
          // Full path to the JSPM package
-         var fullPath = parsedPath.dir +path.sep +parsedPath.name;
+         var fullPath = parsedPath.dir + path.sep + parsedPath.name;
 
          // Relative path from the rootPath to the JSPM package.
-         var relativePath = path.relative(rootPath, parsedPath.dir) +path.sep +parsedPath.name;
+         var relativePath = path.relative(rootPath, parsedPath.dir) + path.sep + parsedPath.name;
 
          try
          {
             // Lookup JSPM package esdoc.json to pull out the source location.
-            var packageESDocConfig = require(fullPath +path.sep +'esdoc.json');
+            var packageESDocConfig = require(fullPath + path.sep + 'esdoc.json');
 
             // Verify that the JSPM package esdoc.json has a source entry.
             if (typeof packageESDocConfig.source !== 'string')
@@ -187,7 +187,7 @@ exports.onHandleConfig = function(ev)
 
             // Remove an leading local directory string
             var jspmSrcRoot = packageESDocConfig.source;
-            jspmSrcRoot = jspmSrcRoot.replace(new RegExp('^\.' +(path.sep === '\\' ? '\\' +path.sep : path.sep)), '');
+            jspmSrcRoot = jspmSrcRoot.replace(new RegExp('^\.' + (path.sep === '\\' ? '\\' + path.sep : path.sep)), '');
 
             // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
             relativePath += path.sep + jspmSrcRoot;
@@ -198,7 +198,7 @@ exports.onHandleConfig = function(ev)
             // Verify that the full path to the JSPM package source exists.
             if (!fs.existsSync(fullPath))
             {
-               throw new Error("full path generated '" +fullPath +"' does not exist");
+               throw new Error("full path generated '" + fullPath + "' does not exist");
             }
 
             // Save the normalized data.
@@ -207,21 +207,21 @@ exports.onHandleConfig = function(ev)
                 packageName: packageName,
                 jspmFullPath: fullPath,
                 jspmPath: relativePath,
-                normalizedPath: packageName +path.sep +packageESDocConfig.source,
+                normalizedPath: packageName + path.sep + packageESDocConfig.source,
                 source: packageESDocConfig.source
              });
 
-            console.log("esdoc-plugin-jspm - Info: linked JSPM package '" +packageName +"' to: " +relativePath);
+            console.log("esdoc-plugin-jspm - Info: linked JSPM package '" + packageName + "' to: " + relativePath);
          }
          catch(err)
          {
-            console.log("esdoc-plugin-jspm - " +err +" for JSPM package '" +packageName +"'");
+            console.log("esdoc-plugin-jspm - " + err + " for JSPM package '" + packageName + "'");
          }
       }
       else
       {
-         console.log("esdoc-plugin-jspm - Warning: skipping '" +packageName
-          +"' as it does not appear to be a JSPM package.");
+         console.log("esdoc-plugin-jspm - Warning: skipping '" + packageName
+          + "' as it does not appear to be a JSPM package.");
       }
    }
 
@@ -231,14 +231,14 @@ exports.onHandleConfig = function(ev)
    // Process include paths -----------------------------------------------------------------------------------------
 
    // Include the source root of this repos code.
-   var includes = ['^' +localSrcRoot];
+   var includes = ['^' + localSrcRoot];
 
    // Add the source roots of all associated jspm packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
       if (packageData[cntr].jspmPath)
       {
-         includes.push('^' +packageData[cntr].jspmPath);
+         includes.push('^' + packageData[cntr].jspmPath);
       }
    }
 
@@ -249,24 +249,24 @@ exports.onHandleConfig = function(ev)
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
-      regex = new RegExp('from[\\s]+(\'|")' +packageData[cntr].normalizedPath, 'g');
+      regex = new RegExp('from[\\s]+(\'|")' + packageData[cntr].normalizedPath, 'g');
       codeReplace.push({ from: regex, to: packageData[cntr].jspmFullPath });
    }
 
    // Process source code import replacements -----------------------------------------------------------------------
 
    // Create import replacements.
-   var wrongImportBase = rootPackageName +path.sep +rootDir +path.sep;
+   var wrongImportBase = rootPackageName + path.sep + rootDir + path.sep;
 
-   var wrongImport = wrongImportBase +localSrcRoot;
-   var actualImport = rootPackageName +path.sep +localSrcRoot;
+   var wrongImport = wrongImportBase + localSrcRoot;
+   var actualImport = rootPackageName + path.sep + localSrcRoot;
 
    importReplace.push({ from: wrongImport, to: actualImport });
 
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
-      wrongImport = wrongImportBase +packageData[cntr].jspmPath;
+      wrongImport = wrongImportBase + packageData[cntr].jspmPath;
       actualImport = packageData[cntr].normalizedPath;
 
       importReplace.push({ from: wrongImport, to: actualImport });
@@ -277,11 +277,11 @@ exports.onHandleConfig = function(ev)
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
-      regex = new RegExp('>' +rootDir +path.sep +packageData[cntr].jspmPath, 'g');
-      htmlReplace.push({ from: regex, to: '>' +packageData[cntr].normalizedPath });
+      regex = new RegExp('>' + rootDir + path.sep + packageData[cntr].jspmPath, 'g');
+      htmlReplace.push({ from: regex, to: '>' + packageData[cntr].normalizedPath });
 
-      regex = new RegExp('>' +packageData[cntr].jspmPath, 'g');
-      htmlReplace.push({ from: regex, to: '>' +packageData[cntr].normalizedPath });
+      regex = new RegExp('>' + packageData[cntr].jspmPath, 'g');
+      htmlReplace.push({ from: regex, to: '>' + packageData[cntr].normalizedPath });
    }
 
    // Process search index replacements -----------------------------------------------------------------------------
@@ -289,7 +289,7 @@ exports.onHandleConfig = function(ev)
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
-      var fromValue = rootDir +path.sep +packageData[cntr].jspmPath;
+      var fromValue = rootDir + path.sep + packageData[cntr].jspmPath;
       searchReplace.push({ from: fromValue, to: packageData[cntr].normalizedPath });
    }
 };
@@ -298,7 +298,7 @@ exports.onHandleConfig = function(ev)
  * For all imports in all source files replace any normalized JSPM package paths with the actual full path to the source
  * file in 'jspm_packages'.
  *
- * @param ev
+ * @param {object}   ev - Event from ESDoc containing data field.
  */
 exports.onHandleCode = function(ev)
 {
@@ -310,7 +310,7 @@ exports.onHandleCode = function(ev)
          // `p1` is the quote format captured by the regex.
          ev.data.code = ev.data.code.replace(codeReplace.from, function(match, p1)
          {
-            return 'from ' +p1 +codeReplace.to;
+            return 'from ' + p1 + codeReplace.to;
          });
       })(codeReplace[cntr]);
    }
@@ -407,7 +407,7 @@ function findRootPath(config)
    if (config.hasOwnProperty('jspmRootPath'))
    {
       // Verify that a JSPM config.js file exists in target root path.
-      if (!fs.existsSync(config.jspmRootPath +path.sep +'config.js'))
+      if (!fs.existsSync(config.jspmRootPath + path.sep + 'config.js'))
       {
          console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
          throw new Error();
@@ -422,7 +422,7 @@ function findRootPath(config)
    // The root path / parent below node_modules must be found.
    var splitDirPath = rootPath.split(path.sep);
 
-   var pluginSrcDir, esdocPluginDir, nodeModuleDir;
+   var esdocPluginDir, nodeModuleDir, pluginSrcDir;
 
    // If running on Travis CI the plugin.js is invoked directly, so the directory structure is different.
    // than running from the installed node_modules location.
@@ -437,7 +437,7 @@ function findRootPath(config)
          rootPath = splitDirPath.join(path.sep);
 
          // Verify that a JSPM config.js file exists in target root directory
-         if (!fs.existsSync(rootPath +path.sep +'config.js'))
+         if (!fs.existsSync(rootPath + path.sep + 'config.js'))
          {
             console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
             throw new Error();
@@ -462,7 +462,7 @@ function findRootPath(config)
          rootPath = splitDirPath.join(path.sep);
 
          // Verify that a JSPM config.js file exists in target root directory
-         if (!fs.existsSync(rootPath +path.sep +'config.js'))
+         if (!fs.existsSync(rootPath + path.sep + 'config.js'))
          {
             console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
             throw new Error();
