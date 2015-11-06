@@ -20,7 +20,7 @@ Installation steps:
 
 For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
-As an alternate installation process please see [typhon-core-gulptasks](https://www.npmjs.com/package/typhon-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` support.
+As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` support.
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhon-core-gulptasks`. 
 
@@ -103,6 +103,6 @@ To suggest a feature or report a bug: https://github.com/typhonjs/esdoc-plugin-j
 
 Many thanks to the ESDoc community for creating a valuable documentation tool. 
 
-esdoc-plugin-jspm (c) 2015-present Michael Leahy, TyphonRT, Inc.
+esdoc-plugin-jspm (c) 2015-present Michael Leahy, TyphonRT Inc.
 
 esdoc-plugin-jspm may be freely distributed under the MIT license.
