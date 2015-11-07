@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/license-MIT-yellowgreen.svg?style=flat)](https://github.com/typhonjs/esdoc-plugin-jspm/blob/master/LICENSE)
 
 [![Build Status](https://travis-ci.org/typhonjs/esdoc-plugin-jspm.svg?branch=master)](https://travis-ci.org/typhonjs/esdoc-plugin-jspm)
-[![Build Status](https://img.shields.io/codecov/c/github/codecov/example-python.svg)](https://codecov.io/github/typhonjs/esdoc-plugin-jspm)
+[![Build Status](https://img.shields.io/codecov/c/github/codecov/esdoc-plugin-jspm.svg)](https://codecov.io/github/typhonjs/esdoc-plugin-jspm)
 [![Dependency Status](https://www.versioneye.com/user/projects/562b368236d0ab0019001056/badge.svg?style=flat)](https://www.versioneye.com/user/projects/562b368236d0ab0019001056)
 
 A plugin for [ESDoc](https://esdoc.org) that enables end to end Javascript ES6 documentation linking [JSPM](http://jspm.io) / [SystemJS](https://github.com/systemjs/systemjs) managed packages in addition to a local source root. This allows creating comprehensive documentation that includes JS managed by JSPM / SystemJS. 
@@ -14,13 +14,12 @@ Installation steps:
 - Install `esdoc` or `gulp-esdoc` in `devDependencies` in `package.json`.
 - Install `esdoc-plugin-jspm` in `devDependencies` in `package.json`.
 - Create an `esdoc.json` configuration file adding the plugin.
-- Add `option` -> `packages` data listing the JSPM packages to link.
 - Add an `esdoc.json` configuration file in all JSPM managed packages to link.
 - Run ESdoc then profit!
 
 For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
-As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for an NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` support.
+As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` & [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace) support.
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhon-core-gulptasks`. 
 
@@ -55,20 +54,11 @@ And the [esdoc.json](https://github.com/typhonjs/backbone-parse-es6/blob/master/
    "title": "<title>",
    "source": "src",
    "destination": "docs",
-   "plugins":
-   [
-      {
-         "name": "esdoc-plugin-jspm",
-         "option":
-         {
-            "packages": ["backbone-es6"]
-         }
-      }
-   ]
+   "plugins": [ { "name": "esdoc-plugin-jspm" } ]
 }
 ```
 
-For the example above the local source root is `src` and the ESDoc documentation is output to `docs`. The linked JSPM package is `backbone-es6`. 
+For the example above the local source root is `src` and the ESDoc documentation is output to `docs`. All JSPM packages found in `package.json` in the `jspm.dependencies` entries will be parsed including any dependencies defined in `config.js` are linked if they contain a valid `esdoc.json` file in the respective root paths. In the case of the repo above the linked JSPM package is `backbone-es6`. 
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
 
@@ -80,6 +70,7 @@ You may use any version of ESDoc, but as an example here is a simple Gulp task w
  */
 gulp.task('docs', function()
 {
+   var esdoc = require('gulp-esdoc');
    var path = require('path');
 
    var esdocConfig = require('.' +path.sep +'esdoc.json');
