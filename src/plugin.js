@@ -1,13 +1,23 @@
 /**
  * esdoc-plugin-jspm -- Provides support for JSPM packages adding them to ESDoc based on path substitution allowing
- * end to end documentation when using SystemJS / JSPM.
+ * end to end documentation when using SystemJS / JSPM. This plugin automatically parses the top level `package.json`
+ * file for a `jspm.dependencies` entry and resolves any packages that contain a valid `esdoc.json` file.
  *
  * Please refer to this repo that is using this plugin to generate documentation:
- * https://github.com/typhonjs/backbone-parse-es6
+ * https://github.com/typhonjs/backbone-parse-es6-demo
  *
  * This is the esdoc.json configuration file for the above repo:
  * {
- *    "title": "Backbone-Parse-ES6",
+ *    "title": "backbone-parse-es6-demo",
+ *    "source": "src",
+ *    "destination": "docs",
+ *    "plugins": [ { "name": "esdoc-plugin-jspm" } ]
+ * }
+ *
+ * To explicitly list the top level packages to be parsed include an `option` hash with a `packages` entry which is
+ * an array listing the packages or aliased packages to link:
+ * {
+ *    "title": "backbone-parse-es6",
  *    "source": "src",
  *    "destination": "docs",
  *    "plugins":
@@ -22,8 +32,7 @@
  *    ]
  * }
  *
- * Note that you must supply an `option` entry with `packages` array that indicates which JSPM managed modules to
- * link with the main source indicated by the `source` entry.
+ * It should be noted that if `packages` are explicitly defined then no child dependencies are parsed.
  *
  * Each JSPM managed package must also have a valid esdoc.json file at it's root that at minimum has a `source` entry
  * so that these sources may be included.
@@ -52,6 +61,8 @@ var docDestination;
 var docGitIgnore;
 var docSearchScript;
 
+var jspmPackageMap = {};
+
 // Stores all RegExp for JSPM packages to run against ES6 import statements.
 var codeReplace = [];
 
@@ -77,6 +88,16 @@ exports.onStart = function(ev)
 {
    option = ev.data.option || {};
    option.packages = option.packages || [];
+   option.parseDependencies = option.parseDependencies || option.packages.length <= 0;
+
+   // Convert option.packages array to object literal w/ no mapped path.
+   if (option.packages.length > 0)
+   {
+      for (var cntr = 0; cntr < option.packages.length; cntr++)
+      {
+         jspmPackageMap[option.packages[cntr]] = null;
+      }
+   }
 };
 
 /**
@@ -102,10 +123,19 @@ exports.onHandleConfig = function(ev)
       var packageJSON = fs.readFileSync(packagePath).toString();
       var packageObj = JSON.parse(packageJSON);
       rootPackageName = packageObj.name;
+
+      // If auto-parsing JSPM dependencies is enabled then analyze `package.json` for a `jspm.dependencies` entry.
+      if (option.parseDependencies)
+      {
+         jspmPackageMap = parsePackageJsonJSPMDependencies(packageObj);
+      }
    }
    catch(err)
    {
-      // ignore
+      if (option.parseDependencies)
+      {
+         throw new Error('Could not locate `package.json`.');
+      }
    }
 
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
@@ -148,80 +178,33 @@ exports.onHandleConfig = function(ev)
    // Stores the normalized paths and data from all JSPM lookups.
    var normalizedData = [];
 
-   if (option.packages.length <= 0)
+   var topLevelPackages = [];
+
+   for (var packageName in jspmPackageMap)
    {
-      console.log(
-       "esdoc-plugin-jspm - Warning: no JSPM packages specified or missing 'option' -> 'packages' data.");
+      var normalizedPackage = parseNormalizedPackage(System, rootPath, packageName);
+
+      // Save the normalized data.
+      if (normalizedPackage !== null)
+      {
+         normalizedData.push(normalizedPackage);
+         topLevelPackages.push(jspmPackageMap[packageName]);
+      }
    }
 
-   for (var cntr = 0; cntr < option.packages.length; cntr++)
+   if (option.parseDependencies)
    {
-      // The package name found in option -> packages.
-      var packageName = option.packages[cntr];
+      var childPackages = parseTopLevelDependencies(rootPath, topLevelPackages);
 
-      // The normalized file URL from SystemJS Loader.
-      var normalized = System.normalizeSync(packageName);
-
-      // Only process valid JSPM packages
-      if (normalized.indexOf('jspm_packages') >= 0)
+      for (var cntr = 0; cntr < childPackages.length; cntr++)
       {
-         // Parse the file URL.
-         var parsedPath = path.parse(url.parse(normalized).pathname);
+         normalizedPackage = parseNormalizedPackage(System, rootPath, childPackages[cntr]);
 
-         // Full path to the JSPM package
-         var fullPath = parsedPath.dir + path.sep + parsedPath.name;
-
-         // Relative path from the rootPath to the JSPM package.
-         var relativePath = path.relative(rootPath, parsedPath.dir) + path.sep + parsedPath.name;
-
-         try
+         // Save the normalized data.
+         if (normalizedPackage !== null)
          {
-            // Lookup JSPM package esdoc.json to pull out the source location.
-            var packageESDocConfig = require(fullPath + path.sep + 'esdoc.json');
-
-            // Verify that the JSPM package esdoc.json has a source entry.
-            if (typeof packageESDocConfig.source !== 'string')
-            {
-               throw new Error("'esdoc.json' does not have a valid 'source' entry");
-            }
-
-            // Remove an leading local directory string
-            var jspmSrcRoot = packageESDocConfig.source;
-            jspmSrcRoot = jspmSrcRoot.replace(new RegExp('^\.' + (path.sep === '\\' ? '\\' + path.sep : path.sep)), '');
-
-            // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
-            relativePath += path.sep + jspmSrcRoot;
-
-            // Add to the JSPM package full path the location of the sources defined in it's esdoc.json config.
-            fullPath += path.sep + jspmSrcRoot;
-
-            // Verify that the full path to the JSPM package source exists.
-            if (!fs.existsSync(fullPath))
-            {
-               throw new Error("full path generated '" + fullPath + "' does not exist");
-            }
-
-            // Save the normalized data.
-            normalizedData.push(
-             {
-                packageName: packageName,
-                jspmFullPath: fullPath,
-                jspmPath: relativePath,
-                normalizedPath: packageName + path.sep + packageESDocConfig.source,
-                source: packageESDocConfig.source
-             });
-
-            console.log("esdoc-plugin-jspm - Info: linked JSPM package '" + packageName + "' to: " + relativePath);
+            normalizedData.push(normalizedPackage);
          }
-         catch(err)
-         {
-            console.log("esdoc-plugin-jspm - " + err + " for JSPM package '" + packageName + "'");
-         }
-      }
-      else
-      {
-         console.log("esdoc-plugin-jspm - Warning: skipping '" + packageName
-          + "' as it does not appear to be a JSPM package.");
       }
    }
 
@@ -277,11 +260,13 @@ exports.onHandleConfig = function(ev)
    // Process all associated JSPM packages.
    for (cntr = 0; cntr < packageData.length; cntr++)
    {
+      var actualPackageName = packageData[cntr].isAlias ? '(' + packageData[cntr].actualPackageName + '):<br>' : '';
+
       regex = new RegExp('>' + rootDir + path.sep + packageData[cntr].jspmPath, 'g');
-      htmlReplace.push({ from: regex, to: '>' + packageData[cntr].normalizedPath });
+      htmlReplace.push({ from: regex, to: '>' + actualPackageName + packageData[cntr].normalizedPath });
 
       regex = new RegExp('>' + packageData[cntr].jspmPath, 'g');
-      htmlReplace.push({ from: regex, to: '>' + packageData[cntr].normalizedPath });
+      htmlReplace.push({ from: regex, to: '>' + actualPackageName + packageData[cntr].normalizedPath });
    }
 
    // Process search index replacements -----------------------------------------------------------------------------
@@ -476,4 +461,217 @@ function findRootPath(config)
    }
 
    return rootPath;
+}
+
+/**
+ * Loads the top level JSPM `config.js` configuration file.
+ *
+ * @param {string}   rootPath - Path to root of project.
+ * @returns {object} parsed JSON.
+ */
+function parseJSPMConfig(rootPath)
+{
+   var vm = require('vm');
+
+   // The location of the JSPM `config.js` configuration file.
+   var jspmConfigPath = rootPath + path.sep + 'config.js';
+
+   if (!fs.existsSync(jspmConfigPath))
+   {
+      console.error('Could not locate JSPM `config.js` at: ' + jspmConfigPath);
+      throw new Error();
+   }
+
+   var buffer = fs.readFileSync(jspmConfigPath, 'utf8');
+
+   var configObj;
+
+   // Strip enclosing `System.config` wrapper.
+   var match = (/System\.config\(([\s\S]*)\);/).exec(buffer);
+
+   if (match !== null && match[1])
+   {
+      // Load buffer as object.
+      configObj = vm.runInThisContext('object = ' + match[1]);
+   }
+
+   if (configObj === null || typeof configObj === 'undefined')
+   {
+      configObj = {};
+   }
+
+   return configObj;
+}
+
+/**
+ * Parses the packageObj / top level package.json for the JSPM entry to index JSPM dependencies.
+ *
+ * @param {object}   packageObj - package.json object
+ * @returns {*}
+ */
+function parsePackageJsonJSPMDependencies(packageObj)
+{
+   if (typeof packageObj.jspm !== 'object')
+   {
+      throw new Error('Could not locate `jspm` entry in `package.json`.');
+   }
+
+   if (typeof packageObj.jspm.dependencies !== 'object')
+   {
+      console.log('esdoc-plugin-jspm - Warning: could not locate `jspm.dependencies` entry in `package.json`.');
+      return {};
+   }
+
+   return packageObj.jspm.dependencies;
+}
+
+/**
+ * Attempts to normalize and parse a packageName returning `null` if it is an invalid package or an object hash
+ * containing the parsed package details.
+ *
+ * @param {object}   System      - SystemJS Loader instance
+ * @param {string}   rootPath    - Path to root of project.
+ * @param {string}   packageName - Package name to normalize & parse.
+ * @returns {*}
+ */
+function parseNormalizedPackage(System, rootPath, packageName)
+{
+   var result = null;
+
+   // The normalized file URL from SystemJS Loader.
+   var normalized = System.normalizeSync(packageName);
+
+   // Any package name with an @ in the name is a dependent package like 'github:typhonjs/backbone-es6@master'.
+   var isDependency = packageName.indexOf('@') >= 0;
+
+   // Only process valid JSPM packages
+   if (normalized.indexOf('jspm_packages') >= 0)
+   {
+      // Parse the file URL.
+      var parsedPath = path.parse(url.parse(normalized).pathname);
+
+      // Full path to the JSPM package
+      var fullPath = parsedPath.dir + path.sep + parsedPath.name;
+
+      // Relative path from the rootPath to the JSPM package.
+      var relativePath = path.relative(rootPath, parsedPath.dir) + path.sep + parsedPath.name;
+
+      try
+      {
+         var actualPackageName = parsedPath.name.split('@').shift();
+
+         // Lookup JSPM package esdoc.json to pull out the source location.
+         var packageESDocConfig = require(fullPath + path.sep + 'esdoc.json');
+
+         // Verify that the JSPM package esdoc.json has a source entry.
+         if (typeof packageESDocConfig.source !== 'string')
+         {
+            throw new Error("'esdoc.json' does not have a valid 'source' entry");
+         }
+
+         // Remove an leading local directory string
+         var jspmSrcRoot = packageESDocConfig.source;
+         jspmSrcRoot = jspmSrcRoot.replace(new RegExp('^\.' + (path.sep === '\\' ? '\\' + path.sep : path.sep)), '');
+
+         // Add to the JSPM package relative path the location of the sources defined in it's esdoc.json config.
+         relativePath += path.sep + jspmSrcRoot;
+
+         // Add to the JSPM package full path the location of the sources defined in it's esdoc.json config.
+         fullPath += path.sep + jspmSrcRoot;
+
+         // Verify that the full path to the JSPM package source exists.
+         if (!fs.existsSync(fullPath))
+         {
+            throw new Error("full path generated '" + fullPath + "' does not exist");
+         }
+
+         result =
+         {
+            packageName: isDependency ? actualPackageName : packageName,
+            actualPackageName: actualPackageName,
+            isDependency: isDependency,
+            jspmFullPath: fullPath,
+            jspmPath: relativePath,
+            source: packageESDocConfig.source
+         };
+
+         result.isAlias = result.packageName !== actualPackageName,
+         result.normalizedPath = result.packageName + path.sep + packageESDocConfig.source,
+
+         console.log("esdoc-plugin-jspm - Info: linked " + (result.isAlias ? "aliased" : "")
+          + (result.isDependency ? "dependent" : "") + " JSPM package '" + result.packageName + "' to: "
+           + relativePath);
+      }
+      catch(err)
+      {
+         // Only emit errors if not auto-parsing JSPM `package.json` dependencies.
+         if (!option.parseDependencies)
+         {
+            console.log("esdoc-plugin-jspm - " + err + " for JSPM package '" + packageName + "'");
+         }
+      }
+   }
+   else
+   {
+      console.log("esdoc-plugin-jspm - Warning: skipping '" + packageName
+       + "' as it does not appear to be a JSPM package.");
+   }
+
+   return result;
+}
+
+/**
+ * Resolves any potential package dependencies for the given list of top level packages against the root JSPM
+ * `config.js` configuration file.
+ *
+ * @param {string}            rootPath - Path to root of project.
+ * @param {Array<string>}     topLevelPackages - Array of top level package names.
+ * @returns {Array<string>}
+ */
+function parseTopLevelDependencies(rootPath, topLevelPackages)
+{
+   // Load the root `config.js` and convert to a JSON object.
+   var jspmConfig = parseJSPMConfig(rootPath);
+
+   // Stores seen packages to eliminate duplicates.
+   var seenPackages = {};
+
+   // Child dependency package names.
+   var childPackages = [];
+
+   // Process top level packages.
+   for (var cntr = 0; cntr < topLevelPackages.length; cntr++)
+   {
+      // Object hash of top level dependency.
+      var packageDependency = jspmConfig.map[topLevelPackages[cntr]];
+
+      // For each child dependency add the package name to `childPackages` if it has not been seen yet.
+      for (var packageName in packageDependency)
+      {
+         if (typeof seenPackages[packageDependency[packageName]] === 'undefined')
+         {
+            childPackages.push(packageDependency[packageName]);
+         }
+
+         seenPackages[packageDependency[packageName]] = 1;
+      }
+   }
+
+   // Traverse `childPackages` adding additional children dependencies if they have not been seen yet.
+   for (cntr = 0; cntr < childPackages.length; cntr++)
+   {
+      packageDependency = jspmConfig.map[childPackages[cntr]];
+
+      for (packageName in packageDependency)
+      {
+         if (typeof seenPackages[packageDependency[packageName]] === 'undefined')
+         {
+            childPackages.push(packageDependency[packageName]);
+         }
+
+         seenPackages[packageDependency[packageName]] = 1;
+      }
+   }
+
+   return childPackages;
 }
