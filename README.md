@@ -21,6 +21,9 @@ For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) 
 
 As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` & [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace) support.
 
+Latest Changes:
+- 0.3.0: Added automatic parsing of `package.json` and all child dependencies from `config.js` 
+
 Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhon-core-gulptasks`. 
 
 If installing and working directly with `esdoc-plugin-jspm` the following is an example integration for `package.json`:
