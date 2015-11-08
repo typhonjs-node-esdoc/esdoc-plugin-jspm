@@ -61,7 +61,8 @@ var docDestination;
 var docGitIgnore;
 var docSearchScript;
 
-var jspmPackageMap = {};
+// Stores option.packages converted into an object hash or the values from `jspm.dependencies` from `package.json`.
+var jspmPackageMap;
 
 // Stores all RegExp for JSPM packages to run against ES6 import statements.
 var codeReplace = [];
@@ -75,7 +76,11 @@ var htmlReplace = [];
 // Stores all from -> to strings to replace for JSPM packages in generated search script data.
 var searchReplace = [];
 
+// Stores sanitized option map.
 var option;
+
+// Stores option that if true silences logging output.
+var silent;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -88,11 +93,13 @@ exports.onStart = function(ev)
 {
    option = ev.data.option || {};
    option.packages = option.packages || [];
-   option.parseDependencies = option.parseDependencies || option.packages.length <= 0;
+   option.parseDependencies = option.parseDependencies || true;
+   silent = option.silent || false;
 
    // Convert option.packages array to object literal w/ no mapped path.
    if (option.packages.length > 0)
    {
+      jspmPackageMap = {};
       for (var cntr = 0; cntr < option.packages.length; cntr++)
       {
          jspmPackageMap[option.packages[cntr]] = null;
@@ -127,15 +134,12 @@ exports.onHandleConfig = function(ev)
       // If auto-parsing JSPM dependencies is enabled then analyze `package.json` for a `jspm.dependencies` entry.
       if (option.parseDependencies)
       {
-         jspmPackageMap = parsePackageJsonJSPMDependencies(packageObj);
+         jspmPackageMap = parsePackageJsonJSPMDependencies(packageObj, jspmPackageMap);
       }
    }
    catch(err)
    {
-      if (option.parseDependencies)
-      {
-         throw new Error('Could not locate `package.json`.');
-      }
+      throw new Error("Could not locate `package.json` in package path '" +packagePath +"'.");
    }
 
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
@@ -154,15 +158,21 @@ exports.onHandleConfig = function(ev)
 
    if (!fs.existsSync(localSrcFullPath))
    {
-      console.log("esdoc-plugin-jspm - Error: could not locate local source path: '" + localSrcFullPath + "'");
+      if (!silent)
+      {
+         console.log("esdoc-plugin-jspm - Error: could not locate local source path: '" + localSrcFullPath + "'");
+      }
       throw new Error();
    }
 
    // Remove an leading local directory string
    localSrcRoot = localSrcRoot.replace(new RegExp('^\.' + (path.sep === '\\' ? '\\' + path.sep : path.sep)), '');
 
-   console.log("esdoc-plugin-jspm - Info: operating in root path: '" + rootPath + "'");
-   console.log("esdoc-plugin-jspm - Info: linked local source root: '" + localSrcRoot + "'");
+   if (!silent)
+   {
+      console.log("esdoc-plugin-jspm - Info: operating in root path: '" + rootPath + "'");
+      console.log("esdoc-plugin-jspm - Info: linked local source root: '" + localSrcRoot + "'");
+   }
 
    // Set the package path to the local root where config.js is located.
    jspm.setPackagePath(rootPath);
@@ -394,7 +404,10 @@ function findRootPath(config)
       // Verify that a JSPM config.js file exists in target root path.
       if (!fs.existsSync(config.jspmRootPath + path.sep + 'config.js'))
       {
-         console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+         if (!silent)
+         {
+            console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+         }
          throw new Error();
       }
 
@@ -424,13 +437,19 @@ function findRootPath(config)
          // Verify that a JSPM config.js file exists in target root directory
          if (!fs.existsSync(rootPath + path.sep + 'config.js'))
          {
-            console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            if (!silent)
+            {
+               console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            }
             throw new Error();
          }
       }
       else
       {
-         console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+         if (!silent)
+         {
+            console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+         }
          throw new Error();
       }
    }
@@ -449,13 +468,19 @@ function findRootPath(config)
          // Verify that a JSPM config.js file exists in target root directory
          if (!fs.existsSync(rootPath + path.sep + 'config.js'))
          {
-            console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            if (!silent)
+            {
+               console.log("esdoc-plugin-jspm - Error: could not locate JSPM / SystemJS 'config.js'.");
+            }
             throw new Error();
          }
       }
       else
       {
-         console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+         if (!silent)
+         {
+            console.log('esdoc-plugin-jspm - Error: could not locate root package path.');
+         }
          throw new Error();
       }
    }
@@ -504,25 +529,57 @@ function parseJSPMConfig(rootPath)
 }
 
 /**
- * Parses the packageObj / top level package.json for the JSPM entry to index JSPM dependencies.
+ * Parses the packageObj / top level package.json for the JSPM entry to index JSPM dependencies. If an existing
+ * `jspmPackageMap` object hash exists then only the keys in that hash are resolved against `jspm.dependencies` entry
+ * in `package.json`.
  *
- * @param {object}   packageObj - package.json object
+ * @param {object}   packageObj     - package.json object
+ * @param {object}   jspmPackageMap - optional predefined jspmPackageMap to limit dependency resolution.
  * @returns {*}
  */
-function parsePackageJsonJSPMDependencies(packageObj)
+function parsePackageJsonJSPMDependencies(packageObj, jspmPackageMap)
 {
+   // Return early if there is no `jspm` entry in `package.json`.
    if (typeof packageObj.jspm !== 'object')
    {
-      throw new Error('Could not locate `jspm` entry in `package.json`.');
+      if (!silent)
+      {
+         console.log('esdoc-plugin-jspm - Warning: could not locate `jspm.dependencies` entry in `package.json`.');
+      }
+      return jspmPackageMap || {};
    }
 
+   // Return early if there is no `jspm.dependencies` entry in `package.json`.
    if (typeof packageObj.jspm.dependencies !== 'object')
    {
-      console.log('esdoc-plugin-jspm - Warning: could not locate `jspm.dependencies` entry in `package.json`.');
-      return {};
+      if (!silent)
+      {
+         console.log('esdoc-plugin-jspm - Warning: could not locate `jspm.dependencies` entry in `package.json`.');
+      }
+      return jspmPackageMap || {};
    }
 
-   return packageObj.jspm.dependencies;
+   // If an existing jspmPackageMap hash is passed in then only resolve dependencies entries in the hash.
+   if (typeof jspmPackageMap === 'object')
+   {
+      for (var key in jspmPackageMap)
+      {
+         if (typeof packageObj.jspm.dependencies[key] !== 'undefined')
+         {
+            jspmPackageMap[key] = packageObj.jspm.dependencies[key];
+         }
+         else if (!silent)
+         {
+            console.log("esdoc-plugin-jspm - Warning: could not locate package '" +key +"' in `jspm.dependencies` entry "
+             + "in `package.json`.");
+         }
+      }
+      return jspmPackageMap;
+   }
+   else
+   {
+      return packageObj.jspm.dependencies;
+   }
 }
 
 /**
@@ -595,17 +652,20 @@ function parseNormalizedPackage(System, rootPath, packageName)
             source: packageESDocConfig.source
          };
 
-         result.isAlias = result.packageName !== actualPackageName,
-         result.normalizedPath = result.packageName + path.sep + packageESDocConfig.source,
+         result.isAlias = result.packageName !== actualPackageName;
+         result.normalizedPath = result.packageName + path.sep + packageESDocConfig.source;
 
-         console.log("esdoc-plugin-jspm - Info: linked " + (result.isAlias ? "aliased" : "")
-          + (result.isDependency ? "dependent" : "") + " JSPM package '" + result.packageName + "' to: "
-           + relativePath);
+         if (!silent)
+         {
+            console.log("esdoc-plugin-jspm - Info: linked " + (result.isAlias ? "aliased" : "")
+             + (result.isDependency ? "dependent" : "") + " JSPM package '" + result.packageName + "' to: "
+              + relativePath);
+         }
       }
       catch(err)
       {
          // Only emit errors if not auto-parsing JSPM `package.json` dependencies.
-         if (!option.parseDependencies)
+         if (!option.parseDependencies && !silent)
          {
             console.log("esdoc-plugin-jspm - " + err + " for JSPM package '" + packageName + "'");
          }
@@ -613,8 +673,11 @@ function parseNormalizedPackage(System, rootPath, packageName)
    }
    else
    {
-      console.log("esdoc-plugin-jspm - Warning: skipping '" + packageName
-       + "' as it does not appear to be a JSPM package.");
+      if (!silent)
+      {
+         console.log("esdoc-plugin-jspm - Warning: skipping '" + packageName
+          + "' as it does not appear to be a JSPM package.");
+      }
    }
 
    return result;
