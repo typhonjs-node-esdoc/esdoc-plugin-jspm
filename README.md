@@ -19,10 +19,17 @@ Installation steps:
 
 For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) and [ESDoc Config](https://esdoc.org/config.html) documentation.
 
-As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with `esdoc-plugin-jspm` & [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace) support.
+As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with all available plugins including `esdoc-plugin-extends-replace`, [esdoc-plugin-jspm](https://www.npmjs.com/package/esdoc-plugin-jspm), [esdoc-importpath-plugin](https://www.npmjs.com/package/esdoc-importpath-plugin]) & [esdoc-es7-plugin](https://www.npmjs.com/package/esdoc-es7-plugin) support.
+
 
 Latest Changes:
-- 0.3.0: Added automatic parsing of `package.json` and all child dependencies from the main JSPM `config.js` 
+- 0.4.0 
+  - If `option.packages` is specified it will now properly pick up any data from `package.json` and parse dependencies
+  from `config.js`.
+  - Added `silent` option which silences logging output.
+
+- 0.3.0 
+  - Added automatic parsing of `package.json` and all child dependencies from the main JSPM `config.js` 
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhonjs-core-gulptasks`. 
 
@@ -64,6 +71,25 @@ And the [esdoc.json](https://github.com/typhonjs/backbone-parse-es6/blob/master/
 For the example above the local source root is `src` and the ESDoc documentation is output to `docs`. All JSPM packages found in `package.json` in the `jspm.dependencies` entries will be parsed including any child dependencies defined in `config.js` are linked if they contain a valid `esdoc.json` file in the respective root paths. In the case of the repo above the linked JSPM package is `backbone-es6`. 
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
+
+If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed.
+```
+{
+   "title": "<title>",
+   "source": "src",
+   "destination": "docs",
+   "plugins": 
+   [ 
+      { 
+         "name": "esdoc-plugin-jspm",
+         "option":
+         {
+            "packages": ["backbone"]
+         }
+      }
+   ]
+}
+```
 
 You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes gulp-esdoc:
 
