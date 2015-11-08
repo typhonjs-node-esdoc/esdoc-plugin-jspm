@@ -137,7 +137,7 @@ exports.onHandleConfig = function(ev)
    }
    catch(err)
    {
-      throw new Error("Could not locate `package.json` in package path '" +packagePath +"'.");
+      throw new Error("Could not locate `package.json` in package path '" + packagePath + "'.");
    }
 
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
@@ -568,8 +568,8 @@ function parsePackageJsonJSPMDependencies(packageObj, jspmPackageMap)
          }
          else if (!silent)
          {
-            console.log("esdoc-plugin-jspm - Warning: could not locate package '" +key +"' in `jspm.dependencies` entry "
-             + "in `package.json`.");
+            console.log("esdoc-plugin-jspm - Warning: could not locate package '" + key
+             + "' in `jspm.dependencies` entry in `package.json`.");
          }
       }
       return jspmPackageMap;
