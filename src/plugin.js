@@ -14,7 +14,7 @@
  *    "plugins": [ { "name": "esdoc-plugin-jspm" } ]
  * }
  *
- * To explicitly list the top level packages to be parsed include an `option` hash with a `packages` entry which is
+ * To explicitly limit the top level packages to be parsed include an `option` hash with a `packages` entry which is
  * an array listing the packages or aliased packages to link:
  * {
  *    "title": "backbone-parse-es6",
@@ -31,8 +31,6 @@
  *       }
  *    ]
  * }
- *
- * It should be noted that if `packages` are explicitly defined then no child dependencies are parsed.
  *
  * Each JSPM managed package must also have a valid esdoc.json file at it's root that at minimum has a `source` entry
  * so that these sources may be included.
