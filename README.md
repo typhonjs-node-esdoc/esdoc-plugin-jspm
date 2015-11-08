@@ -39,7 +39,7 @@ If installing and working directly with `esdoc-plugin-jspm` the following is an 
   ...
 
   "devDependencies": {
-    "esdoc-plugin-jspm": "^0.3.1",
+    "esdoc-plugin-jspm": "^0.4.0",
     "jspm": "^0.16.14",
     "gulp": "^3.9.0",
     "gulp-esdoc": "^0.1.0",
