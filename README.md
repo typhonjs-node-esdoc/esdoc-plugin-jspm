@@ -72,7 +72,7 @@ For the example above the local source root is `src` and the ESDoc documentation
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
 
-If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed. This is only necessary when it's desired to specifically limit linking. By default with no `option.packages` entry all valid dependencies with a valid `esdoc.json` file are linked.
+If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed. This is only necessary when it's desired to specifically limit linking. By default with no `option.packages` entry all valid dependencies with a valid `esdoc.json` file are linked. An optional entry `option.silent` if true suppresses logging output. 
 ```
 {
    "title": "<title>",
@@ -84,6 +84,7 @@ If an `option.packages` entry is supplied only those top level packages and thei
          "name": "esdoc-plugin-jspm",
          "option":
          {
+            "silent": false,  // (Optional) if true then there is no logging output from the plugin.         
             "packages": ["backbone"]
          }
       }
