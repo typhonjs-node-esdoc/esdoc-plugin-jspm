@@ -1,3 +1,6 @@
+## 0.4.1 (2016-01-06)
+- Updated README.md for accuracy.
+
 ## 0.4.0 (2015-11-08)
 - **Feat**
   - If options.packages is specified it will now properly pick up any data from `package.json` and parse dependencies
