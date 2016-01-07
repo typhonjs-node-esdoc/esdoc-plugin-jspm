@@ -1,5 +1,6 @@
 .idea
 .DS_Store
+coverage
 npm-debug.log
 node_modules
 jspm_packages
