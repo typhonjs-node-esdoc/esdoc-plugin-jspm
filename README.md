@@ -85,7 +85,7 @@ If an `option.packages` entry is supplied only those top level packages and thei
          "option":
          {
             "silent": false,  // (Optional) if true then there is no logging output from the plugin.         
-            "packages": ["backbone"]  // (Optional) if provided this list limits linking to dependencies from package.json
+            "packages": ["backbone"]  // (Optional) if provided this list limits linking to dependencies from `package.json`.
          }
       }
    ]
