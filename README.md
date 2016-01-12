@@ -64,13 +64,17 @@ And the [esdoc.json](https://github.com/typhonjs-parse/backbone-parse-es6/blob/m
    "title": "<title>",
    "source": "src",
    "destination": "docs",
-   "plugins": [ { "name": "esdoc-plugin-jspm" } ]
+   "plugins": [ { "name": "esdoc-plugin-jspm" } ],
+   "jspmRootPath": "<path to JSPM root>" // (Optional) - specifies the root path where JSPM `package.json` is located.
 }
 ```
 
 For the example above the local source root is `src` and the ESDoc documentation is output to `docs`. All JSPM packages found in `package.json` in the `jspm.dependencies` entries will be parsed including any child dependencies defined in `config.js` are linked if they contain a valid `esdoc.json` file in the respective root paths. In the case of the repo above the linked JSPM package is `backbone-es6`. 
 
 A `.gitignore` will be added to the `docs` directory that ignores all unnecessary files for checking into a repository. 
+
+An optional top level entry, `jspmRootPath` to `esdoc.json` may define the JSPM root path; often this is added
+programmatically IE `typhonjs-core-gulptasks` for instance. If `jspmRootPath` is not defined `JSPMParser.getRootPath()` locates the root execution path. The root path is where the JSPM `package.json` is located.
 
 If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed. This is only necessary when it's desired to specifically limit linking. By default with no `option.packages` entry all valid dependencies with a valid `esdoc.json` file are linked. An optional entry `option.silent` if true suppresses logging output. 
 ```
