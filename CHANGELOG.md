@@ -1,5 +1,6 @@
 ## 0.5.0 (2016-01-11)
-- Switched to `typhonjs-config-jspm-parse` for JSPM / SystemJS parsing. Supports all JSPM parameters from `package.json`.
+- Switched to `typhonjs-config-jspm-parse` for JSPM / SystemJS parsing. Supports all JSPM parameters from `package.json`. 
+- Provides for requested enhancement in Issue #1.
  
 ## 0.4.1 (2016-01-06)
 - Updated README.md for accuracy.
