@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-jspm",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "homepage": "https://github.com/typhonjs/esdoc-plugin-jspm/",
   "description": "A plugin for ESDoc making it SystemJS / JSPM aware.",
   "license": "MIT",
@@ -18,7 +18,8 @@
     }
   ],
   "dependencies": {
-    "jspm": "^0.16.19"
+    "jspm": "^0.16.21",
+    "typhonjs-config-jspm-parse": "^0.2.1"
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",
@@ -26,18 +27,20 @@
     "fs-extra": "^0.26.0",
     "gulp": "^3.9.0",
     "istanbul": "^0.4.1",
-    "mocha": "^2.3.3",
-    "power-assert": "^1.1.0",
+    "mocha": "^2.3.4",
+    "power-assert": "^1.2.0",
     "typhonjs-config-eslint": "^0.2.1",
-    "typhonjs-core-gulptasks": "^0.3.0"
+    "typhonjs-core-gulptasks": "^0.3.1"
   },
   "scripts": {
     "test": "node ./script/test.js"
   },
   "jspm": {
     "directories": {},
+    "configFile": "testconfig/config.js",
     "dependencies": {
-      "backbone-es6": "github:typhonjs/backbone-es6@master"
+      "backbone-es6": "github:typhonjs/backbone-es6@master",
+      "backbone-parse-es6": "github:typhonjs-parse/backbone-parse-es6@master"
     },
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.34",

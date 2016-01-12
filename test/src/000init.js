@@ -16,11 +16,7 @@ var config = {
    "plugins":
    [
       {
-         "name": "./src/plugin.js",
-         "option":
-         {
-            "packages": ["backbone-es6"]
-         }
+         "name": "./src/plugin.js"
       }
    ]
 };
