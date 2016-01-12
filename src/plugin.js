@@ -463,7 +463,7 @@ function parseESDocPackage(result, silent, logTitle)
 
    if (!silent)
    {
-      console.log(logTitle + " - Info: linked " + (result.isAlias ? "aliased" : "")
+      console.log(logTitle + " - Info: linked " + (result.isAlias ? "aliased " : "")
        + (result.isDependency ? "dependent " : "") + "JSPM package '" + result.packageName + "' to: "
         + result.relativePath);
    }
