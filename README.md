@@ -25,8 +25,7 @@ As an alternate and the preferred all inclusive installation process please see 
 Latest significant changes:
 
 - 0.5.0
-  - Switched to [typhonjs-config-jspm-parse](https://github.com/typhonjs/typhonjs-config-jspm-parse) for JSPM / SystemJS     parsing. Supports all JSPM parameters from `package.json`.   
-  - Provides for requested enhancement in [Issue #1](https://github.com/typhonjs/esdoc-plugin-jspm/issues/1).
+  - Switched to [typhonjs-config-jspm-parse](https://github.com/typhonjs/typhonjs-config-jspm-parse) for JSPM / SystemJS     parsing. Supports all JSPM parameters from `package.json` providing for requested enhancement in [Issue #1](https://github.com/typhonjs/esdoc-plugin-jspm/issues/1).
 
 - 0.4.0 
   - If `option.packages` is specified it will now properly pick up any data from `package.json` and parse dependencies
