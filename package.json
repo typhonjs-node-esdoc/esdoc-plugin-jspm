@@ -18,7 +18,7 @@
     }
   ],
   "dependencies": {
-    "jspm": "^0.16.21",
+    "jspm": "^0.16.23",
     "typhonjs-config-jspm-parse": "^0.3.0"
   },
   "devDependencies": {
@@ -46,7 +46,7 @@
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.34",
       "babel-runtime": "npm:babel-runtime@^5.8.34",
-      "core-js": "npm:core-js@^1.1.4"
+      "core-js": "npm:core-js@^1.2.6"
     }
   },
   "keywords": [
