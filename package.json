@@ -26,11 +26,11 @@
     "esdoc": "^0.4.3",
     "fs-extra": "^0.26.0",
     "gulp": "^3.9.0",
-    "istanbul": "^0.4.1",
+    "istanbul": "^0.4.2",
     "mocha": "^2.3.4",
     "power-assert": "^1.2.0",
     "typhonjs-config-eslint": "^0.2.1",
-    "typhonjs-core-gulptasks": "^0.4.0"
+    "typhonjs-core-gulptasks": "^0.4.1"
   },
   "scripts": {
     "test": "node ./script/test.js",
