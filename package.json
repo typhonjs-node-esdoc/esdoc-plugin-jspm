@@ -18,13 +18,13 @@
     }
   ],
   "dependencies": {
-    "jspm": "^0.16.23",
+    "jspm": "^0.16.24",
     "typhonjs-config-jspm-parse": "^0.3.0"
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",
     "esdoc": "^0.4.3",
-    "fs-extra": "^0.26.0",
+    "fs-extra": "^0.26.4",
     "gulp": "^3.9.0",
     "istanbul": "^0.4.2",
     "mocha": "^2.3.4",
