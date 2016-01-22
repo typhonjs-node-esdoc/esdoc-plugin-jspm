@@ -30,7 +30,7 @@
     "mocha": "^2.3.4",
     "power-assert": "^1.2.0",
     "typhonjs-config-eslint": "^0.2.1",
-    "typhonjs-core-gulptasks": "^0.4.1"
+    "typhonjs-core-gulptasks": "^0.4.2"
   },
   "scripts": {
     "test": "node ./script/test.js",
