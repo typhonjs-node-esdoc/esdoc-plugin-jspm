@@ -18,19 +18,19 @@
     }
   ],
   "dependencies": {
-    "jspm": "^0.16.24",
-    "typhonjs-config-jspm-parse": "^0.3.0"
+    "jspm": "^0.16.25",
+    "typhonjs-config-jspm-parse": "^0.4.0"
   },
   "devDependencies": {
     "codecov.io": "^0.1.6",
     "esdoc": "^0.4.3",
-    "fs-extra": "^0.26.4",
+    "fs-extra": "^0.26.5",
     "gulp": "^3.9.0",
+    "gulp-eslint": "^1.1.1",
     "istanbul": "^0.4.2",
-    "mocha": "^2.3.4",
+    "mocha": "^2.4.4",
     "power-assert": "^1.2.0",
-    "typhonjs-config-eslint": "^0.2.1",
-    "typhonjs-core-gulptasks": "^0.4.2"
+    "typhonjs-config-eslint": "^0.2.1"
   },
   "scripts": {
     "test": "node ./script/test.js",
@@ -44,8 +44,8 @@
       "backbone-parse-es6": "github:typhonjs-parse/backbone-parse-es6@master"
     },
     "devDependencies": {
-      "babel": "npm:babel-core@^5.8.34",
-      "babel-runtime": "npm:babel-runtime@^5.8.34",
+      "babel": "npm:babel-core@^5.8.35",
+      "babel-runtime": "npm:babel-runtime@^5.8.35",
       "core-js": "npm:core-js@^1.2.6"
     }
   },
