@@ -22,18 +22,7 @@ For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) 
 As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with all available plugins including [esdoc-plugin-jspm](https://www.npmjs.com/package/esdoc-plugin-jspm), [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace), [esdoc-importpath-plugin](https://www.npmjs.com/package/esdoc-importpath-plugin]) & [esdoc-es7-plugin](https://www.npmjs.com/package/esdoc-es7-plugin) support.
 
 
-Latest significant changes:
-
-- 0.5.0
-  - Switched to [typhonjs-config-jspm-parse](https://github.com/typhonjs/typhonjs-config-jspm-parse) for JSPM / SystemJS     parsing. Supports all JSPM parameters from `package.json` providing for requested enhancement in [Issue #1](https://github.com/typhonjs/esdoc-plugin-jspm/issues/1).
-
-- 0.4.0 
-  - If `option.packages` is specified it will now properly pick up any data from `package.json` and parse dependencies
-  from `config.js`.
-  - Added `silent` option which silences logging output.
-
-- 0.3.0 
-  - Added automatic parsing of `package.json` and all child dependencies from the main JSPM `config.js` 
+For the latest significant changes please see the [CHANGELOG](https://github.com/typhonjs/esdoc-plugin-jspm/blob/master/CHANGELOG.md).
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs-parse/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhonjs-core-gulptasks`. 
 
@@ -43,8 +32,8 @@ If installing and working directly with `esdoc-plugin-jspm` the following is an 
   ...
 
   "devDependencies": {
-    "esdoc-plugin-jspm": "^0.5.0",
-    "jspm": "^0.16.21",
+    "esdoc-plugin-jspm": "^0.6.0",
+    "jspm": "^0.16.25",
     "gulp": "^3.9.0",
     "gulp-esdoc": "^0.2.0",
   },
