@@ -1,3 +1,6 @@
+## 0.6.0 (2016-01-27)
+- No new features. Removed dependence on `typhonjs-core-gulptasks`. Updated JSPM version to `0.16.25`.
+ 
 ## 0.5.0 (2016-01-11)
 - Switched to `typhonjs-config-jspm-parse` for JSPM / SystemJS parsing. Supports all JSPM parameters from `package.json` providing for requested enhancement in Issue #1.
  
