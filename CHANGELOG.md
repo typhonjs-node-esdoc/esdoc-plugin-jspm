@@ -1,3 +1,7 @@
+## 0.6.1 (2016-03-07)
+- No new features. Removed dependence on `jspm`. Converted to ES6 and integrated `typhonjs-npm-build-test`. Please
+note that Node > 5.0 / NPM > 3.0 may be a hard dependency in order to take advantage of the flat package structure.
+
 ## 0.6.0 (2016-01-27)
 - No new features. Removed dependence on `typhonjs-core-gulptasks`. Updated JSPM version to `0.16.25`.
  

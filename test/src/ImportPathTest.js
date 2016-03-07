@@ -1,5 +1,5 @@
-var assert = require('power-assert');
-var fs = require('fs-extra');
+import { assert } from 'chai';
+import fs         from 'fs-extra';
 
 /**
  * This test confirms that the Backbone-ES6 JSPM package is properly linked with the local source. In this case
@@ -8,12 +8,12 @@ var fs = require('fs-extra');
  *
  * @test {onHandleCode}
  */
-describe('Import Path', function()
+describe('Import Path', () =>
 {
-   it('TestCollection extends Collection', function()
+   it('TestCollection extends Collection', () =>
    {
-      var html = fs.readFileSync(
-       './test/fixture/docs/class/esdoc-plugin-jspm/test/fixture/TestCollection.js~TestCollection.html').toString();
+      const html = fs.readFileSync(
+       './test/fixture/docs/class/esdoc-plugin-jspm/test/fixture/TestCollection.js~TestCollection.html', 'utf-8');
 
       assert(html.indexOf('src/Collection.js~Collection.html">Collection</a></span> &#x2192; TestCollection<') >= 0);
    });

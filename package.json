@@ -1,15 +1,15 @@
 {
   "name": "esdoc-plugin-jspm",
-  "version": "0.6.0",
-  "homepage": "https://github.com/typhonjs/esdoc-plugin-jspm/",
+  "version": "0.6.1",
+  "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/",
   "description": "A plugin for ESDoc making it SystemJS / JSPM aware.",
-  "license": "MIT",
+  "license": "MPL-2.0",
   "author": {
     "name": "Mike Leahy"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typhonjs/esdoc-plugin-jspm/esdoc-plugin-jspm.git"
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/esdoc-plugin-jspm.git"
   },
   "maintainers": [
     {
@@ -18,36 +18,39 @@
     }
   ],
   "dependencies": {
-    "jspm": "^0.16.25",
-    "typhonjs-config-jspm-parse": "^0.4.0"
+    "typhonjs-config-jspm-parse": "^0.4.1"
   },
   "devDependencies": {
-    "codecov.io": "^0.1.6",
-    "esdoc": "^0.4.3",
-    "fs-extra": "^0.26.5",
-    "gulp": "^3.9.0",
-    "gulp-eslint": "^1.1.1",
-    "istanbul": "^0.4.2",
-    "mocha": "^2.4.4",
-    "power-assert": "^1.2.0",
-    "typhonjs-config-eslint": "^0.2.1"
+    "jspm": "^0.16.0",
+    "typhonjs-config-eslint": "^0.4.0",
+    "typhonjs-npm-build-test": "^0.0.10"
+  },
+  "engines" : {
+    "npm" : ">=3.x"
   },
   "scripts": {
-    "test": "node ./script/test.js",
-    "test-coverage": "node ./script/test.js --coverage"
+    "build": "babel-node ./node_modules/typhonjs-npm-scripts-build-babel/scripts/build.js",
+    "esdoc": "esdoc -c esdoc.json",
+    "eslint": "eslint .",
+    "prepublish": "babel-node ./node_modules/typhonjs-npm-scripts-publish/scripts/prepublish.js",
+    "test": "babel-node ./node_modules/typhonjs-npm-scripts-test-mocha/scripts/test.js",
+    "test-coverage": "babel-node ./node_modules/typhonjs-npm-scripts-test-mocha/scripts/test-coverage.js"
   },
   "jspm": {
     "directories": {},
     "configFile": "testconfig/config.js",
     "dependencies": {
-      "backbone-es6": "github:typhonjs/backbone-es6@master",
-      "backbone-parse-es6": "github:typhonjs-parse/backbone-parse-es6@master"
+      "backbone-es6": "github:typhonjs-backbone/backbone-es6@master",
+      "backbone-parse-es6": "github:typhonjs-backbone-parse/backbone-parse-es6@master"
     },
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.35",
       "babel-runtime": "npm:babel-runtime@^5.8.35",
       "core-js": "npm:core-js@^1.2.6"
     }
+  },
+  "typhonjs": {
+    "scmAutoInstallJSPM": false
   },
   "keywords": [
     "esdoc",
@@ -62,13 +65,14 @@
     "ECMAScript6",
     "ECMAScript2015"
   ],
-  "main": "src/plugin.js",
+  "main": "dist/plugin.js",
   "files": [
+    "dist",
     "src",
-    "CHANGELOG.md"
+    "AUTHORS.md"
   ],
   "directories": {},
   "bugs": {
-    "url": "https://github.com/typhonjs/esdoc-plugin-jspm/issues"
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/issues"
   }
 }
