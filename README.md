@@ -23,7 +23,7 @@ For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) 
 As an alternate and the preferred all inclusive installation process please see [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) for a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation with all available plugins including [esdoc-plugin-jspm](https://www.npmjs.com/package/esdoc-plugin-jspm), [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace), [esdoc-importpath-plugin](https://www.npmjs.com/package/esdoc-importpath-plugin]) & [esdoc-es7-plugin](https://www.npmjs.com/package/esdoc-es7-plugin) support.
 
 
-For the latest significant changes please see the [CHANGELOG](https://github.com/typhonjs/esdoc-plugin-jspm/blob/master/CHANGELOG.md).
+For the latest significant changes please see the [CHANGELOG](https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/blob/master/CHANGELOG.md).
 
 Please see the [backbone-parse-es6](https://github.com/typhonjs-parse/backbone-parse-es6) repo for an example using `esdoc-plugin-jspm` via `typhonjs-core-gulptasks`. 
 
@@ -114,11 +114,11 @@ It should be noted that `esdoc-plugin-jspm` uses the `includes` ESDoc configurat
 
 Currently the [ESDoc Hosting Service](https://doc.esdoc.org/) isn't JSPM / SystemJS aware, so docs will have to be generated locally and hosted independently.
 
-Check out the docs for [backbone-parse-es6](http://js.docs.typhonrt.org/backbone-parse-es6/) and notice that when viewing [ParseCollection](http://js.docs.typhonrt.org/backbone-parse-es6/class/backbone-parse-es6/src/ParseCollection.js~ParseCollection.html) that it properly contains links to the inheriting class from a JSPM package ([backbone-es6](https://github.com/typhonjs/backbone-es6)) and also contains an `Inherited Summary` section for Collection & Event which is in the inheritance structure. 
+Check out the docs for [backbone-parse-es6](http://js.docs.typhonrt.org/typhonjs-parse/backbone-parse-es6/) and notice that when viewing [ParseCollection](http://js.docs.typhonrt.org/typhonjs-parse/backbone-parse-es6/class/backbone-parse-es6/src/ParseCollection.js~ParseCollection.html) that it properly contains links to the inheriting class from a JSPM package ([backbone-es6](https://github.com/typhonjs-backbone/backbone-es6)) and also contains an `Inherited Summary` section for Collection & Event which is in the inheritance structure. 
 
 Without using `esdoc-plugin-jspm` the output only contains the local source. See the version of [ParseCollection](https://doc.esdoc.org/github.com/typhonjs/backbone-parse-es6/class/src/ParseCollection.js~ParseCollection.html) on the ESDoc hosting service for a comparison.
 
-To suggest a feature or report a bug: https://github.com/typhonjs/esdoc-plugin-jspm/issues
+To suggest a feature or report a bug: https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/issues
 
 Many thanks to the ESDoc community for creating a valuable documentation tool. 
 
