@@ -2,12 +2,12 @@
 
 [![NPM](https://img.shields.io/npm/v/esdoc-plugin-jspm.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-jspm)
 [![Code Style](https://img.shields.io/badge/code%20style-allman-yellowgreen.svg?style=flat)](https://en.wikipedia.org/wiki/Indent_style#Allman_style)
-[![License](https://img.shields.io/badge/license-MIT-yellowgreen.svg?style=flat)](https://github.com/typhonjs/esdoc-plugin-jspm/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-MPLv2-yellowgreen.svg?style=flat)](https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/blob/master/LICENSE)
 [![Gitter](https://img.shields.io/gitter/room/typhonjs/TyphonJS.svg)](https://gitter.im/typhonjs/TyphonJS)
 
-[![Build Status](https://travis-ci.org/typhonjs/esdoc-plugin-jspm.svg?branch=master)](https://travis-ci.org/typhonjs/esdoc-plugin-jspm)
-[![Build Status](https://img.shields.io/codecov/c/github/typhonjs/esdoc-plugin-jspm.svg)](https://codecov.io/github/typhonjs/esdoc-plugin-jspm)
-[![Dependency Status](https://www.versioneye.com/user/projects/562b368236d0ab0019001056/badge.svg?style=flat)](https://www.versioneye.com/user/projects/562b368236d0ab0019001056)
+[![Build Status](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-jspm.svg?branch=master)](https://travis-ci.org/typhonjs-node-esdoc/esdoc-plugin-jspm)
+[![Coverage](https://img.shields.io/codecov/c/github/typhonjs-node-esdoc/esdoc-plugin-jspm.svg)](https://codecov.io/github/typhonjs-node-esdoc/esdoc-plugin-jspm)
+[![Dependency Status](https://www.versioneye.com/user/projects/56dde6fd4839f70031248763/badge.svg?style=flat)](https://www.versioneye.com/user/projects/56dde6fd4839f70031248763)
 
 A plugin for [ESDoc](https://esdoc.org) that enables end to end Javascript ES6 documentation linking [JSPM](http://jspm.io) / [SystemJS](https://github.com/systemjs/systemjs) managed packages in addition to a local source root. This allows creating comprehensive documentation that includes JS managed by JSPM / SystemJS. 
 
