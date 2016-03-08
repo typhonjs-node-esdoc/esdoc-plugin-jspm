@@ -108,6 +108,16 @@ gulp.task('docs', function()
 });
 ```
 
+If `esdoc` is installed in devDependencies an example NPM script section in `package.json` follow:
+```
+scripts: 
+{
+   "esdoc": "esdoc -c esdoc.json"
+}
+```
+
+Use `npm run esdoc` on the command line to execute ESDoc w/ `esdoc.json`.
+
 For a complete demo with instructions on how to use `backbone-parse-es6` (Backbone + Parse 1.6+) with SystemJS / JSPM see the [backbone-parse-es6-todos](https://github.com/typhonjs-demos/backbone-parse-es6-todos) repo. Backbone, Parse, JSPM / SystemJS (setup, use, building), Gulp, ESLint and ESDoc is covered. 
 
 It should be noted that `esdoc-plugin-jspm` uses the `includes` ESDoc configuration parameter and will overwrite any `includes` top level entry stored in `esdoc.json`.  
