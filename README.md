@@ -138,4 +138,4 @@ Many thanks to the ESDoc community for creating a valuable documentation tool.
 
 esdoc-plugin-jspm (c) 2015-present Michael Leahy, TyphonRT Inc.
 
-esdoc-plugin-jspm may be freely distributed under the MIT license.
+esdoc-plugin-jspm may be freely distributed under the MPLv2.0 license.
