@@ -1,4 +1,8 @@
-## 0.6.1 (2016-03-07)
+## 0.6.3 (2016-03-10)
+- Changed `esdoc.json` to `.esdocrc`. All TyphonJS repos are standardizing on using `.esdocrc`, but all ESDoc 
+plugins including esdoc-plugin-jspm supports `.esdocrc` or `esdoc.json` where applicable.
+
+## 0.6.1 / 0.6.2 (2016-03-07)
 - No new features. Removed dependence on `jspm`. Converted to ES6 and integrated `typhonjs-npm-build-test`. Please
 note that Node > 5.0 / NPM > 3.0 may be a hard dependency in order to take advantage of the flat package structure.
 

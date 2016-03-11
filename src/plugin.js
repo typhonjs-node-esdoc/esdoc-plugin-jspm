@@ -1,12 +1,12 @@
 /**
  * esdoc-plugin-jspm -- Provides support for JSPM packages adding them to ESDoc based on path substitution allowing
  * end to end documentation when using SystemJS / JSPM. This plugin automatically parses the top level `package.json`
- * file for a `jspm.dependencies` entry and resolves any packages that contain a valid `esdoc.json` file.
+ * file for a `jspm.dependencies` entry and resolves any packages that contain a valid `.esdocrc` or `esdoc.json` file.
  *
  * Please refer to this repo that is using this plugin to generate documentation:
  * https://github.com/typhonjs/backbone-parse-es6-demo
  *
- * This is the esdoc.json configuration file for the above repo:
+ * This is the .esdocrc configuration file for the above repo:
  * {
  *    "title": "backbone-parse-es6-demo",
  *    "source": "src",
@@ -32,16 +32,16 @@
  *    ]
  * }
  *
- * Each JSPM managed package must also have a valid esdoc.json file at it's root that at minimum has a `source` entry
- * so that these sources may be included.
+ * Each JSPM managed package must also have a valid `.esdocrc` or `esdoc.json` file at it's root that at minimum has a
+ * `source` entry so that these sources may be included.
  *
  * Since ESDoc only works with one source root this plugin rewrites in `onHandleConfig` the source root to the parent
  * directory to `.` and builds an `includes` array that includes the original "source" value in addition to normalized
- * paths to the linked JSPM packages. Therefore be aware that you can not use "includes" in your esdoc.json
- * configuration.
+ * paths to the linked JSPM packages. Therefore be aware that you can not use "includes" in your esdoc configuration
+ * file.
  *
- * An optional top level entry, `jspmRootPath` to `esdoc.json` may define the JSPM root path; often this is added
- * programmatically IE `typhonjs-core-gulptasks` for instance. If `jspmRootPath` is not defined
+ * An optional top level entry, `jspmRootPath` to the esdoc configuration file may define the JSPM root path; often this
+ * is added programmatically IE `typhonjs-core-gulptasks` for instance. If `jspmRootPath` is not defined
  * `JSPMParser.getRootPath()` locates the root execution path. The root path is where the JSPM `package.json` is
  * located.
  *
@@ -420,6 +420,12 @@ export function onComplete()
 // Utility functions ------------------------------------------------------------------------------------------------
 
 /**
+ * Defines the supported file names for ESDoc configuration file names.
+ * @type {string[]}
+ */
+const s_ESDOC_CONFIG_NAMES = ['.esdocrc', 'esdoc.json'];
+
+/**
  * Provides an additional parser for ESDoc JSPM packages when using `JSPMParser.normalizePackage`.
  *
  * @param {object}   result   - Existing JSPMParser parsed package results.
@@ -430,15 +436,30 @@ export function onComplete()
 const s_PARSE_ESDOC_PACKAGE = (result, silent, logTitle) =>
 {
    let packageESDocConfig;
+   let esdocFilename;
 
-   // Lookup JSPM package esdoc.json to pull out the source location. If not found then return null result.
-   try { packageESDocConfig = require(`${result.fullPath}${path.sep}esdoc.json`); }
-   catch (err) { return null; }
+   // Lookup JSPM package ESDoc config file to pull out the source location.
+   for (let cntr = 0; cntr < s_ESDOC_CONFIG_NAMES.length; cntr++)
+   {
+      esdocFilename = s_ESDOC_CONFIG_NAMES[cntr];
+      try
+      {
+         packageESDocConfig = require(`${result.fullPath}${path.sep}${esdocFilename}`);
+         break;
+      }
+      catch (err) { /* ... */ }
+   }
 
-   // Verify that the JSPM package esdoc.json has a source entry.
+   // Verify that the JSPM package esdoc configuration file has loaded otherwise return null to skip this package.
+   if (typeof packageESDocConfig !== 'object')
+   {
+      return null;
+   }
+
+   // Verify that the JSPM package esdoc configuration file has a source entry.
    if (typeof packageESDocConfig.source !== 'string')
    {
-      throw new Error("'esdoc.json' does not have a valid 'source' entry");
+      throw new Error(`'${esdocFilename}' does not have a valid 'source' entry`);
    }
 
    // Remove an leading local directory string
