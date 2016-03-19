@@ -1,9 +1,9 @@
 language: node_js
 node_js:
-  - "5.7.0"
+  - "5.8.0"
 before_script:
   - npm install -g jspm
   - jspm install
 script:
   - npm run eslint
-  - TRAVIS=1 npm run test-coverage
+  - npm run test-coverage
