@@ -1,3 +1,6 @@
+## 0.6.5 (2016-03-19)
+- Fixed bug in loading `.esdocrc` in parsing JSPM packages.
+
 ## 0.6.4 (2016-03-14)
 - Updated dependencies.
 

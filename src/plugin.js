@@ -444,10 +444,12 @@ const s_PARSE_ESDOC_PACKAGE = (result, silent, logTitle) =>
       esdocFilename = s_ESDOC_CONFIG_NAMES[cntr];
       try
       {
-         packageESDocConfig = require(`${result.fullPath}${path.sep}${esdocFilename}`);
-         break;
+         const packageJSON = fs.readFileSync(`${result.fullPath}${path.sep}${esdocFilename}`, 'utf-8');
+         packageESDocConfig = JSON.parse(packageJSON);
       }
       catch (err) { /* ... */ }
+
+      if (typeof packageESDocConfig !== 'undefined') { break; }
    }
 
    // Verify that the JSPM package esdoc configuration file has loaded otherwise return null to skip this package.
