@@ -50,7 +50,9 @@
     }
   },
   "typhonjs": {
-    "scmAutoInstallJSPM": false
+    "scm": {
+      "autoInstallJSPM": false
+    }
   },
   "keywords": [
     "esdoc",
