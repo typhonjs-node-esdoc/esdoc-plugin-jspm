@@ -49,20 +49,20 @@
  * processing are constructed.
  */
 
-import fs         from 'fs';
-import path       from 'path';
+'use strict';
 
-import JSPMParser from 'typhonjs-config-jspm-parse';
+import fs            from 'fs-extra';
+import path          from 'path';
 
-import jspm       from 'jspm';   // Note: this could be dangerous for NPM < 3.0.
+import JSPMParser    from 'typhonjs-config-jspm-parse';
 
-let packagePath = './package.json';
+import packageParser from './packageParser.js';
 
 let docGitIgnore;
 let docSearchScript;
 
-// Stores option.packages converted into an object hash or the values from `jspm.dependencies` from `package.json`.
-let jspmPackageMap;
+// Stores all RegExp for JSPM packages to run against generated AST.
+const astReplace = [];
 
 // Stores all RegExp for JSPM packages to run against ES6 import statements.
 const codeReplace = [];
@@ -79,9 +79,6 @@ const searchReplace = [];
 // Stores sanitized option map.
 let option;
 
-// Stores option that if true silences logging output.
-let silent;
-
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
 /**
@@ -94,17 +91,7 @@ export function onStart(ev)
    option = ev.data.option || {};
    option.packages = option.packages || [];
    option.parseDependencies = option.parseDependencies || true;
-   silent = option.silent || false;
-
-   // Convert option.packages array to object literal w/ no mapped path.
-   if (option.packages.length > 0)
-   {
-      jspmPackageMap = {};
-      for (let cntr = 0; cntr < option.packages.length; cntr++)
-      {
-         jspmPackageMap[option.packages[cntr]] = null;
-      }
-   }
+   option.silent = option.silent || false;
 }
 
 /**
@@ -117,33 +104,6 @@ export function onStart(ev)
  */
 export function onHandleConfig(ev)
 {
-   if (ev.data.config.package)
-   {
-      packagePath = ev.data.config.package;
-   }
-
-   // Get package.json as ESDoc will prepend the name of the module found in the package.json
-   let rootPackageName = undefined;
-
-   try
-   {
-      const packageJSON = fs.readFileSync(packagePath, 'utf-8');
-      const packageObj = JSON.parse(packageJSON);
-
-      rootPackageName = packageObj.name;
-
-      // If auto-parsing JSPM dependencies is enabled then analyze `package.json` for a `jspm.dependencies` entry.
-      if (option.parseDependencies)
-      {
-         jspmPackageMap = JSPMParser.getPackageJSPMDependencies(packageObj, jspmPackageMap, silent,
-          'esdoc-plugin-jspm');
-      }
-   }
-   catch (err)
-   {
-      throw new Error(`Could not locate 'package.json' in package path '${packagePath}'.`);
-   }
-
    // Store destination for sources, gitignore and create the path to <doc destination>/script/search_index.js
    const docDestination = ev.data.config.destination;
    docGitIgnore = `${docDestination}${path.sep}.gitignore`;
@@ -161,7 +121,7 @@ export function onHandleConfig(ev)
 
    if (!fs.existsSync(localSrcFullPath))
    {
-      if (!silent)
+      if (!option.silent)
       {
          console.log(`esdoc-plugin-jspm - Error: could not locate local source path: '${localSrcFullPath}'`);
       }
@@ -171,84 +131,33 @@ export function onHandleConfig(ev)
    // Remove an leading local directory string
    localSrcRoot = localSrcRoot.replace(new RegExp(`^\.${path.sep === '\\' ? `\\${path.sep}` : path.sep}`), '');
 
-   if (!silent)
+   if (!option.silent)
    {
       console.log(`esdoc-plugin-jspm - Info: operating in root path: '${rootPath}'`);
       console.log(`esdoc-plugin-jspm - Info: linked local source root: '${localSrcRoot}'`);
    }
 
-   // Set the package path to the local root where config.js is located.
-   jspm.setPackagePath(rootPath);
-
-   // Create SystemJS Loader
-   const System = new jspm.Loader();
-
    // ESDoc uses the root directory name if no package.json with a package name exists.
    const rootDir = rootPath.split(path.sep).pop();
 
-   rootPackageName = rootPackageName || rootDir;
+   const { allPackageData, allPackageDataESDoc, rootPackageName } = packageParser(ev.data.config, option);
 
-   const packageResolver = JSPMParser.getPackageResolver(System);
-
-   // Stores the normalized paths and data from all JSPM lookups.
-   const normalizedData = [];
-   const topLevelPackages = [];
-   const duplicateCheck = {};
-
-   for (const packageName in jspmPackageMap)
-   {
-      const normalizedPackage = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, silent,
-       'esdoc-plugin-jspm', s_PARSE_ESDOC_PACKAGE);
-
-      // Save the normalized data.
-      if (normalizedPackage !== null)
-      {
-         // Verify if a duplicate linked package has a different relative path; post warning if so.
-         if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
-         {
-            if (duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
-            {
-               console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
-                + `linked to a different relative path '${normalizedPackage.relativePath}'.`);
-            }
-         }
-
-         normalizedData.push(normalizedPackage);
-         topLevelPackages.push(packageName);
-         duplicateCheck[normalizedPackage.packageName] = normalizedPackage.relativePath;
-      }
-   }
-
-   if (option.parseDependencies)
-   {
-      const childPackages = packageResolver.getUniqueDependencyList(topLevelPackages);
-
-      for (let cntr = 0; cntr < childPackages.length; cntr++)
-      {
-         const normalizedPackage = JSPMParser.parseNormalizedPackage(System, childPackages[cntr], rootPath, silent,
-          'esdoc-plugin-jspm', s_PARSE_ESDOC_PACKAGE);
-
-         // Save the normalized data.
-         if (normalizedPackage !== null)
-         {
-            // Verify if a duplicate linked package has a different relative path; post warning if so.
-            if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
-            {
-               if (duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
-               {
-                  console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
-                   + `linked to a different relative path '${normalizedPackage.relativePath}'.`);
-               }
-            }
-
-            normalizedData.push(normalizedPackage);
-            duplicateCheck[normalizedPackage.packageName] = normalizedPackage.relativePath;
-         }
-      }
-   }
-
-   const packageData = normalizedData || [];
    let regex;
+
+   // Process ast replacements --------------------------------------------------------------------------------------
+
+   // Process all associated JSPM packages.
+   for (let cntr = 0; cntr < allPackageData.length; cntr++)
+   {
+      regex = new RegExp(`^${allPackageData[cntr].packageName}${path.sep}`, 'g');
+      astReplace.push({ from: regex, to: `${allPackageData[cntr].relativePath}${path.sep}` });
+
+      if (allPackageData[cntr].hasMainEntry)
+      {
+         regex = new RegExp(`^${allPackageData[cntr].packageName}$`, 'g');
+         astReplace.push({ from: regex, to: `${allPackageData[cntr].relativePathMain}` });
+      }
+   }
 
    // Process include paths -----------------------------------------------------------------------------------------
 
@@ -256,11 +165,11 @@ export function onHandleConfig(ev)
    const includes = [`^${localSrcRoot}`];
 
    // Add the source roots of all associated jspm packages.
-   for (let cntr = 0; cntr < packageData.length; cntr++)
+   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
    {
-      if (packageData[cntr].relativePath)
+      if (allPackageDataESDoc[cntr].relativePath)
       {
-         includes.push(`^${packageData[cntr].relativePath}`);
+         includes.push(`^${allPackageDataESDoc[cntr].relativePath}`);
       }
    }
 
@@ -269,10 +178,10 @@ export function onHandleConfig(ev)
    // Process code import replacements ------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < packageData.length; cntr++)
+   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
    {
-      regex = new RegExp(`from[\\s]+(\'|")${packageData[cntr].normalizedPath}`, 'g');
-      codeReplace.push({ from: regex, to: packageData[cntr].fullPath });
+      regex = new RegExp(`from[\\s]+(\'|")${allPackageDataESDoc[cntr].normalizedPath}`, 'g');
+      codeReplace.push({ from: regex, to: allPackageDataESDoc[cntr].fullPath });
    }
 
    // Process source code import replacements -----------------------------------------------------------------------
@@ -286,10 +195,10 @@ export function onHandleConfig(ev)
    importReplace.push({ from: wrongImport, to: actualImport });
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < packageData.length; cntr++)
+   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
    {
-      wrongImport = wrongImportBase + packageData[cntr].relativePath;
-      actualImport = packageData[cntr].normalizedPath;
+      wrongImport = wrongImportBase + allPackageDataESDoc[cntr].relativePath;
+      actualImport = allPackageDataESDoc[cntr].normalizedPath;
 
       importReplace.push({ from: wrongImport, to: actualImport });
    }
@@ -297,24 +206,25 @@ export function onHandleConfig(ev)
    // Process HTML replacements -------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < packageData.length; cntr++)
+   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
    {
-      const actualPackageName = packageData[cntr].isAlias ? `(${packageData[cntr].actualPackageName}):<br>` : '';
+      const actualPackageName = allPackageDataESDoc[cntr].isAlias ?
+       `(${allPackageDataESDoc[cntr].actualPackageName}):<br>` : '';
 
-      regex = new RegExp(`>${rootDir}${path.sep}${packageData[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${packageData[cntr].normalizedPath}` });
+      regex = new RegExp(`>${rootDir}${path.sep}${allPackageDataESDoc[cntr].relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${allPackageDataESDoc[cntr].normalizedPath}` });
 
-      regex = new RegExp(`>${packageData[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${packageData[cntr].normalizedPath}` });
+      regex = new RegExp(`>${allPackageDataESDoc[cntr].relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${allPackageDataESDoc[cntr].normalizedPath}` });
    }
 
    // Process search index replacements -----------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < packageData.length; cntr++)
+   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
    {
-      const fromValue = rootDir + path.sep + packageData[cntr].relativePath;
-      searchReplace.push({ from: fromValue, to: packageData[cntr].normalizedPath });
+      const fromValue = rootDir + path.sep + allPackageDataESDoc[cntr].relativePath;
+      searchReplace.push({ from: fromValue, to: allPackageDataESDoc[cntr].normalizedPath });
    }
 }
 
@@ -416,79 +326,3 @@ export function onComplete()
    const gitIgnore = '!jspm_packages\nast\ncoverage.json\ndump.json\npackage.json';
    fs.writeFileSync(docGitIgnore, gitIgnore);
 }
-
-// Utility functions ------------------------------------------------------------------------------------------------
-
-/**
- * Defines the supported file names for ESDoc configuration file names.
- * @type {string[]}
- */
-const s_ESDOC_CONFIG_NAMES = ['.esdocrc', 'esdoc.json'];
-
-/**
- * Provides an additional parser for ESDoc JSPM packages when using `JSPMParser.normalizePackage`.
- *
- * @param {object}   result   - Existing JSPMParser parsed package results.
- * @param {boolean}  silent   - Optional boolean to suppress log output.
- * @param {string}   logTitle - Optional string to title log output.
- * @returns {*}
- */
-const s_PARSE_ESDOC_PACKAGE = (result, silent, logTitle) =>
-{
-   let packageESDocConfig;
-   let esdocFilename;
-
-   // Lookup JSPM package ESDoc config file to pull out the source location.
-   for (let cntr = 0; cntr < s_ESDOC_CONFIG_NAMES.length; cntr++)
-   {
-      esdocFilename = s_ESDOC_CONFIG_NAMES[cntr];
-      try
-      {
-         const packageJSON = fs.readFileSync(`${result.fullPath}${path.sep}${esdocFilename}`, 'utf-8');
-         packageESDocConfig = JSON.parse(packageJSON);
-      }
-      catch (err) { /* ... */ }
-
-      if (typeof packageESDocConfig !== 'undefined') { break; }
-   }
-
-   // Verify that the JSPM package esdoc configuration file has loaded otherwise return null to skip this package.
-   if (typeof packageESDocConfig !== 'object')
-   {
-      return null;
-   }
-
-   // Verify that the JSPM package esdoc configuration file has a source entry.
-   if (typeof packageESDocConfig.source !== 'string')
-   {
-      throw new Error(`'${esdocFilename}' does not have a valid 'source' entry`);
-   }
-
-   // Remove an leading local directory string
-   let esdocSrcRoot = packageESDocConfig.source;
-
-   esdocSrcRoot = esdocSrcRoot.replace(new RegExp(`^\.${path.sep === '\\' ? `\\${path.sep}` : path.sep}`), '');
-
-   // Add to the JSPM package relative path the location of the sources defined in its esdoc.json config.
-   result.relativePath += path.sep + esdocSrcRoot;
-
-   // Add to the JSPM package full path the location of the sources defined in its esdoc.json config.
-   result.fullPath += path.sep + esdocSrcRoot;
-
-   // Provides the normalized JSPM package name + ESDoc source root.
-   result.normalizedPath = result.packageName + path.sep + packageESDocConfig.source;
-
-   // Verify that the full path to the JSPM package source exists.
-   if (!fs.existsSync(result.fullPath))
-   {
-      throw new Error(`full path generated '${result.fullPath}' does not exist`);
-   }
-
-   if (!silent)
-   {
-      console.log(`${logTitle} - Info: linked ${result.isAlias ? "aliased " : ""}`
-       + `${result.isDependency ? "dependent " : ""}JSPM package '${result.packageName}' to: ${result.relativePath}`);
-   }
-
-   return result;
-};
