@@ -14,6 +14,15 @@ const rootPath = JSPMParser.getRootPath();
 // Set the package path to the local root where config.js is located.
 jspm.setPackagePath(rootPath);
 
+/**
+ * Parses the JSPM / SystemJS runtime for package information returning a version with all package data, all packages
+ * with valid ESDoc config files and the root package name from `package.json` or the actual root directory name.
+ *
+ * @param {object}   config - ESDoc configuration.
+ * @param {object}   option - Optional parameters from plugin instance.
+ *
+ * @returns {{allPackageData: Array, allPackageDataESDoc: Array, rootPackageName: (*|T)}}
+ */
 export default function packageParser(config, option)
 {
    // Stores option.packages converted into an object hash or the values from `jspm.dependencies` from `package.json`.
