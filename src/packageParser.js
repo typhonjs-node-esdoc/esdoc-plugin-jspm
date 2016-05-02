@@ -9,35 +9,50 @@ import jspm       from 'jspm';   // Note: this could be dangerous for NPM < 3.0.
 
 let packagePath = './package.json';
 
-const rootPath = JSPMParser.getRootPath();
-
-// Set the package path to the local root where config.js is located.
-jspm.setPackagePath(rootPath);
-
 /**
  * Parses the JSPM / SystemJS runtime for package information returning a version with all package data, all packages
  * with valid ESDoc config files and the root package name from `package.json` or the actual root directory name.
  *
  * @param {object}   config - ESDoc configuration.
- * @param {object}   option - Optional parameters from plugin instance.
+ * @param {object}   options - Optional parameters from plugin instance.
  *
- * @returns {{allPackageData: Array, allPackageDataESDoc: Array, rootPackageName: (*|T)}}
+ * @returns {{normPackageData: Array, normPackageDataESDoc: Array, rootPackageName: (*|T)}}
  */
-export default function packageParser(config, option)
+export default function packageParser(config, options)
 {
-   // Stores option.packages converted into an object hash or the values from `jspm.dependencies` from `package.json`.
+   const rootPath = config.hasOwnProperty('jspmRootPath') ? config.jspmRootPath :
+    JSPMParser.getRootPath();
+
+   // Set the package path to the local root where config.js is located.
+   jspm.setPackagePath(rootPath);
+
+   // Stores options.packages converted into an object hash or the values from `jspm.dependencies` from `package.json`.
    let jspmPackageMap;
+
+   // Stores options.devPackages converted into an object hash or the values from `jspm.devDependencies` from
+   // `package.json`.
+   let jspmDevPackageMap;
 
    // Get package.json as ESDoc will prepend the name of the module found in the package.json
    let rootPackageName;
 
-   // Convert option.packages array to object literal w/ no mapped path.
-   if (option.packages.length > 0)
+   // Convert options.packages array to object literal w/ no mapped path.
+   if (options.packages.length > 0)
    {
       jspmPackageMap = {};
-      for (let cntr = 0; cntr < option.packages.length; cntr++)
+      for (let cntr = 0; cntr < options.packages.length; cntr++)
       {
-         jspmPackageMap[option.packages[cntr]] = null;
+         jspmPackageMap[options.packages[cntr]] = null;
+      }
+   }
+
+   // Convert options.packages array to object literal w/ no mapped path.
+   if (options.devPackages.length > 0)
+   {
+      jspmDevPackageMap = {};
+      for (let cntr = 0; cntr < options.devPackages.length; cntr++)
+      {
+         jspmDevPackageMap[options.devPackages[cntr]] = null;
       }
    }
 
@@ -52,9 +67,12 @@ export default function packageParser(config, option)
       rootPackageName = packageObj.name;
 
       // If auto-parsing JSPM dependencies is enabled then analyze `package.json` for a `jspm.dependencies` entry.
-      if (option.parseDependencies)
+      if (options.parseDependencies)
       {
-         jspmPackageMap = JSPMParser.getPackageJSPMDependencies(packageObj, jspmPackageMap, option.silent,
+         jspmPackageMap = JSPMParser.getPackageJSPMDependencies(packageObj, jspmPackageMap, options.silent,
+          'esdoc-plugin-jspm');
+
+         jspmDevPackageMap = JSPMParser.getPackageJSPMDevDependencies(packageObj, jspmDevPackageMap, options.silent,
           'esdoc-plugin-jspm');
       }
    }
@@ -62,6 +80,10 @@ export default function packageParser(config, option)
    {
       throw new Error(`Could not locate 'package.json' in package path '${packagePath}'.`);
    }
+
+   // Filter package maps so that they only include NPM / GitHub packages.
+   jspmPackageMap = s_FILTER_PACKAGE_MAP(jspmPackageMap);
+   jspmDevPackageMap = s_FILTER_PACKAGE_MAP(jspmDevPackageMap);
 
    // ESDoc uses the root directory name if no package.json with a package name exists.
    const rootDir = rootPath.split(path.sep).pop();
@@ -75,16 +97,16 @@ export default function packageParser(config, option)
 
    // Stores the normalized paths and data from all JSPM lookups.
    const normalizedData = [];
-   const topLevelPackages = [];
+   const parseTopLevelPackages = [];
    const duplicateCheck = {};
 
    const normalizedDataESDoc = [];
-   const topLevelPackagesESDoc = [];
+   const parseTopLevelPackagesESDoc = [];
    const duplicateCheckESDoc = {};
 
    for (const packageName in jspmPackageMap)
    {
-      const normalizedPackage = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, option.silent,
+      const normalizedPackage = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, options.silent,
        'esdoc-plugin-jspm');
 
       // Save the normalized data.
@@ -93,7 +115,7 @@ export default function packageParser(config, option)
          // Verify if a duplicate linked package has a different relative path; post warning if so.
          if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
          {
-            if (!option.silent && duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
+            if (!options.silent && duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
             {
                console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
                 + `linked to a different relative path '${normalizedPackage.relativePath}'.`);
@@ -101,11 +123,11 @@ export default function packageParser(config, option)
          }
 
          normalizedData.push(normalizedPackage);
-         topLevelPackages.push(packageName);
+         parseTopLevelPackages.push(packageName);
          duplicateCheck[normalizedPackage.packageName] = normalizedPackage.relativePath;
       }
 
-      const normalizedPackageESDoc = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, option.silent,
+      const normalizedPackageESDoc = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, options.silent,
        'esdoc-plugin-jspm', s_PARSE_ESDOC_PACKAGE);
 
       // Save the normalized ESDoc data.
@@ -114,7 +136,7 @@ export default function packageParser(config, option)
          // Verify if a duplicate linked package has a different relative path; post warning if so.
          if (typeof duplicateCheckESDoc[normalizedPackageESDoc.packageName] === 'string')
          {
-            if (!option.silent &&
+            if (!options.silent &&
              duplicateCheckESDoc[normalizedPackageESDoc.packageName] !== normalizedPackageESDoc.relativePath)
             {
                console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackageESDoc.packageName}' `
@@ -123,19 +145,19 @@ export default function packageParser(config, option)
          }
 
          normalizedDataESDoc.push(normalizedPackageESDoc);
-         topLevelPackagesESDoc.push(packageName);
+         parseTopLevelPackagesESDoc.push(packageName);
          duplicateCheckESDoc[normalizedPackageESDoc.packageName] = normalizedPackageESDoc.relativePath;
       }
    }
 
-   if (option.parseDependencies)
+   if (options.parseDependencies)
    {
-      const childPackages = packageResolver.getUniqueDependencyList(topLevelPackages);
+      const childPackages = packageResolver.getUniqueDependencyList(parseTopLevelPackages);
 
       for (let cntr = 0; cntr < childPackages.length; cntr++)
       {
          const normalizedPackage = JSPMParser.parseNormalizedPackage(System, childPackages[cntr], rootPath,
-          option.silent, 'esdoc-plugin-jspm');
+          options.silent, 'esdoc-plugin-jspm');
 
          // Save the normalized data.
          if (normalizedPackage !== null)
@@ -143,7 +165,7 @@ export default function packageParser(config, option)
             // Verify if a duplicate linked package has a different relative path; post warning if so.
             if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
             {
-               if (!option.silent &&
+               if (!options.silent &&
                 duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
                {
                   console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
@@ -156,12 +178,12 @@ export default function packageParser(config, option)
          }
       }
 
-      const childPackagesESDoc = packageResolver.getUniqueDependencyList(topLevelPackagesESDoc);
+      const childPackagesESDoc = packageResolver.getUniqueDependencyList(parseTopLevelPackagesESDoc);
 
       for (let cntr = 0; cntr < childPackagesESDoc.length; cntr++)
       {
          const normalizedPackageESDoc = JSPMParser.parseNormalizedPackage(System, childPackagesESDoc[cntr], rootPath,
-          option.silent, 'esdoc-plugin-jspm', s_PARSE_ESDOC_PACKAGE);
+          options.silent, 'esdoc-plugin-jspm', s_PARSE_ESDOC_PACKAGE);
 
          // Save the normalized data.
          if (normalizedPackageESDoc !== null)
@@ -169,7 +191,7 @@ export default function packageParser(config, option)
             // Verify if a duplicate linked package has a different relative path; post warning if so.
             if (typeof duplicateCheckESDoc[normalizedPackageESDoc.packageName] === 'string')
             {
-               if (!option.silent &&
+               if (!options.silent &&
                 duplicateCheckESDoc[normalizedPackageESDoc.packageName] !== normalizedPackageESDoc.relativePath)
                {
                   console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackageESDoc.packageName}' `
@@ -183,16 +205,33 @@ export default function packageParser(config, option)
       }
    }
 
-   const allPackageData = normalizedData || [];
-   const allPackageDataESDoc = normalizedDataESDoc || [];
+   const normPackageData = normalizedData || [];
+   const normPackageDataESDoc = normalizedDataESDoc || [];
 
-   global['$$esdoc_plugin_jspm'] =
+   const uniqueDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmPackageMap));
+   const uniqueDevDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmDevPackageMap));
+   const uniqueDepsAll = packageResolver.getUniqueDependencyList();
+
+   const topLevelPackages = s_FILTER_PACKAGE_MAP(packageResolver.topLevelPackages);
+   const childPackageMap = packageResolver.childPackageMap;
+
+   global.$$esdoc_plugin_jspm =
    {
-      allPackageData,
-      allPackageDataESDoc
+      childPackageMap,        // All child packages parsed from System / config.js
+      jspmDevPackageMap,      // Top level JSPM packages taken from options and / or package.json jspm.devDependencies.
+      jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
+      normPackageData,        // Normalized package data for all JSPM managed packages.
+      normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
+      rootDir,                // Root directory name.
+      rootPackageName,        // Root package name.
+      rootPath,               // Root path
+      topLevelPackages,       // All top level dependencies and dev dependencies.
+      uniqueDeps,             // Unique package dependencies
+      uniqueDevDeps,          // Unique package dev dependencies
+      uniqueDepsAll           // All unique package dependencies
    };
 
-   return { allPackageData, allPackageDataESDoc, rootPackageName };
+   return global.$$esdoc_plugin_jspm;
 }
 
 // Utility functions ------------------------------------------------------------------------------------------------
@@ -202,6 +241,24 @@ export default function packageParser(config, option)
  * @type {string[]}
  */
 const s_ESDOC_CONFIG_NAMES = ['.esdocrc', 'esdoc.json'];
+
+/**
+ * Filters a package map copying over to output only NPM or GitHub packages.
+ *
+ * @param {object}   packageMap - Package map to filter.
+ * @param {object}   output - An optional output map.
+ * @returns {{}}
+ */
+const s_FILTER_PACKAGE_MAP = (packageMap, output = {}) =>
+{
+   for (const key in packageMap)
+   {
+      const value = packageMap[key];
+      if (value.startsWith('npm:') || value.startsWith('github:')) { output[key] = value; }
+   }
+
+   return output;
+};
 
 /**
  * Provides an additional parser for ESDoc JSPM packages when using `JSPMParser.normalizePackage`.

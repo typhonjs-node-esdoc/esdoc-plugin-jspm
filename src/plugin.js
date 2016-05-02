@@ -15,7 +15,8 @@
  * }
  *
  * To explicitly limit the top level packages to be parsed include an `option` hash with a `packages` entry which is
- * an array listing the packages or aliased packages to link:
+ * an array listing the packages or aliased packages to link; likewise top level devDependencies can be limited with
+ * `devPackages`:
  * {
  *    "title": "backbone-parse-es6",
  *    "source": "src",
@@ -27,6 +28,7 @@
  *          "option":
  *          {
  *             "packages": ["backbone-es6"]
+ *             "devPackages": ["babel"]
  *          }
  *       }
  *    ]
@@ -47,14 +49,39 @@
  *
  * In the `onHandleConfig` method below further construction of all resources necessary in code, import, and search
  * processing are constructed.
+ *
+ * In the `onHandleTag` method below normalized JSPM package data is associated with all JSPM managed code and is
+ * accessible with `tag.packageData`. Also a `relativePath` field is added to each tag for the associated file from
+ * the root path.
+ *
+ * `esdoc-plugin-jspm` exports to `global.$$esdoc-plugin-jspm` an object hash of all related parsed data for JSPM
+ * managed source code available via `typhonjs-config-jspm-parse`. The following is a synopsis of the exported data:
+ * ```
+ * global.$$esdoc_plugin_jspm =
+ * {
+ *    childPackageMap,        // All child packages parsed from System / config.js
+ *    jspmDevPackageMap,      // Top level JSPM packages taken from options and / or package.json jspm.devDependencies.
+ *    jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
+ *    normPackageData,        // Normalized package data for all JSPM managed packages.
+ *    normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
+ *    rootDir,                // Root directory name.
+ *    rootPackageName,        // Root package name.
+ *    rootPath,               // Root path
+ *    topLevelPackages,       // All top level dependencies and dev dependencies.
+ *    uniqueDeps,             // Unique package dependencies
+ *    uniqueDevDeps,          // Unique package dev dependencies
+ *    uniqueDepsAll           // All unique package dependencies
+ * };
+ * ```
+ *
+ * By exporting all of the parsed data to `global.$$esdoc-plugin-jspm` this allows any other ESDoc plugins which may
+ * utilize JSPM data to access it without also having to separately parse this data in each plugin.
  */
 
 'use strict';
 
 import fs            from 'fs-extra';
 import path          from 'path';
-
-import JSPMParser    from 'typhonjs-config-jspm-parse';
 
 import packageParser from './packageParser.js';
 
@@ -77,7 +104,7 @@ const htmlReplace = [];
 const searchReplace = [];
 
 // Stores sanitized option map.
-let option;
+let options;
 
 // ESDoc plugin callbacks -------------------------------------------------------------------------------------------
 
@@ -88,10 +115,11 @@ let option;
  */
 export function onStart(ev)
 {
-   option = ev.data.option || {};
-   option.packages = option.packages || [];
-   option.parseDependencies = option.parseDependencies || true;
-   option.silent = option.silent || false;
+   options = ev.data.option || {};
+   options.packages = Array.isArray(options.packages) ? options.packages : [];
+   options.devPackages = Array.isArray(options.devPackages) ? options.devPackages : [];
+   options.parseDependencies = typeof options.parseDependencies === 'boolean' ? options.parseDependencies : true;
+   options.silent = typeof options.silent === 'boolean' ? options.silent : false;
 }
 
 /**
@@ -114,14 +142,17 @@ export function onHandleConfig(ev)
 
    ev.data.config.source = '.';
 
-   const rootPath = ev.data.config.hasOwnProperty('jspmRootPath') ? ev.data.config.jspmRootPath :
-    JSPMParser.getRootPath();
+   // Parse package data storing results in `global.$$esdoc_plugin_jspm`.
+   packageParser(ev.data.config, options);
+
+   // Retrieve required JSPM package and path data.
+   const { normPackageData, normPackageDataESDoc, rootDir, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
 
    const localSrcFullPath = rootPath + path.sep + localSrcRoot;
 
    if (!fs.existsSync(localSrcFullPath))
    {
-      if (!option.silent)
+      if (!options.silent)
       {
          console.log(`esdoc-plugin-jspm - Error: could not locate local source path: '${localSrcFullPath}'`);
       }
@@ -131,31 +162,26 @@ export function onHandleConfig(ev)
    // Remove an leading local directory string
    localSrcRoot = localSrcRoot.replace(new RegExp(`^\.${path.sep === '\\' ? `\\${path.sep}` : path.sep}`), '');
 
-   if (!option.silent)
+   if (!options.silent)
    {
       console.log(`esdoc-plugin-jspm - Info: operating in root path: '${rootPath}'`);
       console.log(`esdoc-plugin-jspm - Info: linked local source root: '${localSrcRoot}'`);
    }
-
-   // ESDoc uses the root directory name if no package.json with a package name exists.
-   const rootDir = rootPath.split(path.sep).pop();
-
-   const { allPackageData, allPackageDataESDoc, rootPackageName } = packageParser(ev.data.config, option);
 
    let regex;
 
    // Process ast replacements --------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < allPackageData.length; cntr++)
+   for (let cntr = 0; cntr < normPackageData.length; cntr++)
    {
-      regex = new RegExp(`^${allPackageData[cntr].packageName}${path.sep}`, 'g');
-      astReplace.push({ from: regex, to: `${allPackageData[cntr].relativePath}${path.sep}` });
+      regex = new RegExp(`^${normPackageData[cntr].packageName}${path.sep}`, 'g');
+      astReplace.push({ from: regex, to: `${normPackageData[cntr].relativePath}${path.sep}` });
 
-      if (allPackageData[cntr].hasMainEntry)
+      if (normPackageData[cntr].hasMainEntry)
       {
-         regex = new RegExp(`^${allPackageData[cntr].packageName}$`, 'g');
-         astReplace.push({ from: regex, to: `${allPackageData[cntr].relativePathMain}` });
+         regex = new RegExp(`^${normPackageData[cntr].packageName}$`, 'g');
+         astReplace.push({ from: regex, to: `${normPackageData[cntr].relativePathMain}` });
       }
    }
 
@@ -165,11 +191,11 @@ export function onHandleConfig(ev)
    const includes = [`^${localSrcRoot}`];
 
    // Add the source roots of all associated jspm packages.
-   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
+   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      if (allPackageDataESDoc[cntr].relativePath)
+      if (normPackageDataESDoc[cntr].relativePath)
       {
-         includes.push(`^${allPackageDataESDoc[cntr].relativePath}`);
+         includes.push(`^${normPackageDataESDoc[cntr].relativePath}`);
       }
    }
 
@@ -178,10 +204,10 @@ export function onHandleConfig(ev)
    // Process code import replacements ------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
+   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      regex = new RegExp(`from[\\s]+(\'|")${allPackageDataESDoc[cntr].normalizedPath}`, 'g');
-      codeReplace.push({ from: regex, to: allPackageDataESDoc[cntr].fullPath });
+      regex = new RegExp(`from[\\s]+(\'|")${normPackageDataESDoc[cntr].normalizedPath}`, 'g');
+      codeReplace.push({ from: regex, to: normPackageDataESDoc[cntr].fullPath });
    }
 
    // Process source code import replacements -----------------------------------------------------------------------
@@ -195,10 +221,10 @@ export function onHandleConfig(ev)
    importReplace.push({ from: wrongImport, to: actualImport });
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
+   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      wrongImport = wrongImportBase + allPackageDataESDoc[cntr].relativePath;
-      actualImport = allPackageDataESDoc[cntr].normalizedPath;
+      wrongImport = wrongImportBase + normPackageDataESDoc[cntr].relativePath;
+      actualImport = normPackageDataESDoc[cntr].normalizedPath;
 
       importReplace.push({ from: wrongImport, to: actualImport });
    }
@@ -206,27 +232,82 @@ export function onHandleConfig(ev)
    // Process HTML replacements -------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
+   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      const actualPackageName = allPackageDataESDoc[cntr].isAlias ?
-       `(${allPackageDataESDoc[cntr].actualPackageName}):<br>` : '';
+      const actualPackageName = normPackageDataESDoc[cntr].isAlias ?
+       `(${normPackageDataESDoc[cntr].actualPackageName}):<br>` : '';
 
-      regex = new RegExp(`>${rootDir}${path.sep}${allPackageDataESDoc[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${allPackageDataESDoc[cntr].normalizedPath}` });
+      regex = new RegExp(`>${rootDir}${path.sep}${normPackageDataESDoc[cntr].relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${normPackageDataESDoc[cntr].normalizedPath}` });
 
-      regex = new RegExp(`>${allPackageDataESDoc[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${allPackageDataESDoc[cntr].normalizedPath}` });
+      regex = new RegExp(`>${normPackageDataESDoc[cntr].relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${normPackageDataESDoc[cntr].normalizedPath}` });
    }
 
    // Process search index replacements -----------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < allPackageDataESDoc.length; cntr++)
+   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      const fromValue = rootDir + path.sep + allPackageDataESDoc[cntr].relativePath;
-      searchReplace.push({ from: fromValue, to: allPackageDataESDoc[cntr].normalizedPath });
+      const fromValue = rootDir + path.sep + normPackageDataESDoc[cntr].relativePath;
+      searchReplace.push({ from: fromValue, to: normPackageDataESDoc[cntr].normalizedPath });
    }
 }
+
+/**
+ * Forthcoming support for AST modification for 0.7.0 release of `esdoc-plugin-jspm`.
+ *
+ * For all imports in all source files replace any normalized JSPM package paths with the relative path to the source
+ * file in 'jspm_packages'.
+ *
+ * @param {object}   ev - Event from ESDoc containing data field.
+ */
+// export function onHandleAST(ev)
+// {
+//    const relativePath = path.relative(rootPath, ev.data.filePath);
+//    const relativeDir = relativePath.slice(0, relativePath.lastIndexOf(path.sep))
+//
+//    console.log('!! EPJ - onHandleAST - relativeDir: ' + relativeDir +'; relativePath: ' + relativePath);
+//
+//    ASTUtil.traverse(ev.data.ast, (node, parent) =>
+//    {
+//       if (node.type === 'ImportDeclaration' && node.source)
+//       {
+//          if (node.source.value)
+//          {
+//             console.log('!! EPJ - onHandleAST - node: ' + JSON.stringify(node));
+//
+//             for (let cntr = 0; cntr < astReplace.length; cntr++)
+//             {
+//                if (astReplace[cntr].from.test(node.source.value))
+//                {
+//                   // Get relative path from current source directory to replace path; note that any trailing path
+//                   // separator is dropped and must be added to the calculated path.
+//                   const replacePath = path.relative(relativeDir, astReplace[cntr].to)
+//                    + (astReplace[cntr].to.endsWith(path.sep) ? path.sep : '');
+//
+//                   console.log('!! EPJ - onHandleAST - found node.source.value: ' + node.source.value + '; replacePath: ' + replacePath);
+//
+//                   node.source.isModified = true;
+//
+//                   node.source.originalValue = node.source.value
+//
+//                   node.source.value = node.source.value.replace(astReplace[cntr].from, replacePath);
+//
+//                   if (node.source.raw)
+//                   {
+//                      node.source.raw = `'${node.source.value}'`
+//                      node.source.originalRaw = `'${node.source.originalValue}'`
+//                   }
+//                }
+//             }
+//
+//             // Set isModified to false if not replacement occurred.
+//             if (typeof node.source.isModified !== 'boolean') { node.source.isModified = false; }
+//          }
+//       }
+//    });
+// }
 
 /**
  * For all imports in all source files replace any normalized JSPM package paths with the actual full path to the source
@@ -251,6 +332,9 @@ export function onHandleCode(ev)
 }
 
 /**
+ * Adds to all tags the relative path for each associated file from the root directory in addition to any associated
+ * JSPM normalized package data.
+ *
  * Since the source root is "." / the base root of the repo ESDoc currently creates the wrong import path, so they
  * need to be corrected. ESDoc fabricates "<package name>/<base root>" when we want just "<package name>/" for the local
  * project code. For the JSPM packages the import statement is "<package name>/<base root>/<JSPM path>" where
@@ -260,10 +344,31 @@ export function onHandleCode(ev)
  */
 export function onHandleTag(ev)
 {
+   const { normPackageData } = global.$$esdoc_plugin_jspm;
+
    // Perform import replacement.
    for (let cntr = 0; cntr < ev.data.tag.length; cntr++)
    {
       const tag = ev.data.tag[cntr];
+
+      // Add relativePath to all tags if it doesn't exist already.
+      if (typeof tag.relativePath !== 'string')
+      {
+         tag.relativePath = tag.longname.split('~')[0].replace(/^.*?[/]/, '');
+      }
+
+      // Associate JSPM package data to tag.
+      // TODO: This is a potential performance issue with many tags and many packages.
+      if (tag.relativePath.startsWith('jspm_packages'))
+      {
+         tag.packageManager = 'jspm';
+
+         for (let cntr2 = 0; cntr2 < normPackageData.length; cntr2++)
+         {
+            const packageData = normPackageData[cntr2];
+            if (tag.relativePath.startsWith(packageData.relativePath)) { tag.packageData = packageData; break; }
+         }
+      }
 
       if (tag.importPath)
       {
