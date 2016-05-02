@@ -64,7 +64,7 @@
  *    jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
  *    normPackageData,        // Normalized package data for all JSPM managed packages.
  *    normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
- *    rootDir,                // Root directory name.
+      rootDirName,            // Root directory name.
  *    rootPackageName,        // Root package name.
  *    rootPath,               // Root path
  *    topLevelPackages,       // All top level dependencies and dev dependencies.
@@ -146,7 +146,7 @@ export function onHandleConfig(ev)
    packageParser(ev.data.config, options);
 
    // Retrieve required JSPM package and path data.
-   const { normPackageData, normPackageDataESDoc, rootDir, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
+   const { normPackageData, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
 
    const localSrcFullPath = rootPath + path.sep + localSrcRoot;
 
@@ -213,7 +213,7 @@ export function onHandleConfig(ev)
    // Process source code import replacements -----------------------------------------------------------------------
 
    // Create import replacements.
-   const wrongImportBase = `${rootPackageName}${path.sep}${rootDir}${path.sep}`;
+   const wrongImportBase = `${rootPackageName}${path.sep}${rootDirName}${path.sep}`;
 
    let wrongImport = `${wrongImportBase}${localSrcRoot}`;
    let actualImport = `${rootPackageName}${path.sep}${localSrcRoot}`;
@@ -237,7 +237,7 @@ export function onHandleConfig(ev)
       const actualPackageName = normPackageDataESDoc[cntr].isAlias ?
        `(${normPackageDataESDoc[cntr].actualPackageName}):<br>` : '';
 
-      regex = new RegExp(`>${rootDir}${path.sep}${normPackageDataESDoc[cntr].relativePath}`, 'g');
+      regex = new RegExp(`>${rootDirName}${path.sep}${normPackageDataESDoc[cntr].relativePath}`, 'g');
       htmlReplace.push({ from: regex, to: `>${actualPackageName}${normPackageDataESDoc[cntr].normalizedPath}` });
 
       regex = new RegExp(`>${normPackageDataESDoc[cntr].relativePath}`, 'g');
@@ -249,7 +249,7 @@ export function onHandleConfig(ev)
    // Process all associated JSPM packages.
    for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
    {
-      const fromValue = rootDir + path.sep + normPackageDataESDoc[cntr].relativePath;
+      const fromValue = rootDirName + path.sep + normPackageDataESDoc[cntr].relativePath;
       searchReplace.push({ from: fromValue, to: normPackageDataESDoc[cntr].normalizedPath });
    }
 }
@@ -388,9 +388,12 @@ export function onHandleTag(ev)
  */
 export function onHandleHTML(ev)
 {
-   for (let cntr = 0; cntr < htmlReplace.length; cntr++)
+   if (ev.data.fileName.endsWith('.html'))
    {
-      ev.data.html = ev.data.html.replace(htmlReplace[cntr].from, htmlReplace[cntr].to);
+      for (let cntr = 0; cntr < htmlReplace.length; cntr++)
+      {
+         ev.data.html = ev.data.html.replace(htmlReplace[cntr].from, htmlReplace[cntr].to);
+      }
    }
 }
 

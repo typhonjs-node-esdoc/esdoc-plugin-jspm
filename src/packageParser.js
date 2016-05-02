@@ -86,9 +86,14 @@ export default function packageParser(config, options)
    jspmDevPackageMap = s_FILTER_PACKAGE_MAP(jspmDevPackageMap);
 
    // ESDoc uses the root directory name if no package.json with a package name exists.
-   const rootDir = rootPath.split(path.sep).pop();
+   const rootPathSplit = rootPath.split(path.sep);
 
-   rootPackageName = rootPackageName || rootDir;
+   let rootDirName = rootPathSplit.pop();
+
+   // If rootPath ends with the path separator pop one more level down.
+   if (rootDirName === '') { rootDirName = rootPathSplit.pop(); }
+
+   rootPackageName = rootPackageName || rootDirName;
 
    // Create SystemJS Loader
    const System = new jspm.Loader();
@@ -222,7 +227,7 @@ export default function packageParser(config, options)
       jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
       normPackageData,        // Normalized package data for all JSPM managed packages.
       normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
-      rootDir,                // Root directory name.
+      rootDirName,            // Root directory name.
       rootPackageName,        // Root package name.
       rootPath,               // Root path
       topLevelPackages,       // All top level dependencies and dev dependencies.

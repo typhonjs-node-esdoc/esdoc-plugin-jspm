@@ -1,6 +1,6 @@
 {
   "name": "esdoc-plugin-jspm",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "homepage": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/",
   "description": "A plugin for ESDoc making it SystemJS / JSPM aware.",
   "license": "MPL-2.0",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm/esdoc-plugin-jspm.git"
+    "url": "https://github.com/typhonjs-node-esdoc/esdoc-plugin-jspm.git"
   },
   "maintainers": [
     {
@@ -18,7 +18,7 @@
     }
   ],
   "dependencies": {
-    "typhonjs-config-jspm-parse": "^0.5.0"
+    "typhonjs-config-jspm-parse": "^0.6.0"
   },
   "devDependencies": {
     "jspm": "^0.16.0",
