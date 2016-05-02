@@ -1,4 +1,4 @@
-![esdoc-plugin-jspm](http://i.imgur.com/1TsbnX2.png)
+![esdoc-plugin-jspm](https://i.imgur.com/1TsbnX2.png)
 
 [![NPM](https://img.shields.io/npm/v/esdoc-plugin-jspm.svg?label=npm)](https://www.npmjs.com/package/esdoc-plugin-jspm)
 [![Code Style](https://img.shields.io/badge/code%20style-allman-yellowgreen.svg?style=flat)](https://en.wikipedia.org/wiki/Indent_style#Allman_style)
@@ -22,7 +22,7 @@ For more information view the [ESDoc tutorial](https://esdoc.org/tutorial.html) 
 
 It should be noted that all TyphonJS repos now are standardizing on `.esdocrc` for the ESDoc configuration file. Both `.esdocrc` and `esdoc.json` are supported by this plugin. 
 
-As an alternate and the preferred all inclusive installation process please see [typhonjs-npm-build-test](https://www.npmjs.com/package/typhonjs-npm-build-test) for a NPM package which contains several dependencies for building / testing ES6 NPM modules including ESDoc generation with the following plugins including [esdoc-plugin-jspm](https://www.npmjs.com/package/esdoc-plugin-jspm), [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace), [esdoc-importpath-plugin](https://www.npmjs.com/package/esdoc-importpath-plugin]) & [esdoc-es7-plugin](https://www.npmjs.com/package/esdoc-es7-plugin) support.
+As an alternate and the preferred all inclusive installation process please see [typhonjs-npm-build-test](https://www.npmjs.com/package/typhonjs-npm-build-test) for a NPM package which contains several dependencies for building / testing ES6 NPM modules including ESDoc generation with the following plugins including [esdoc-plugin-jspm](https://www.npmjs.com/package/esdoc-plugin-jspm), [esdoc-plugin-extends-replace](https://www.npmjs.com/package/esdoc-plugin-extends-replace).
 
 Additionally [typhonjs-core-gulptasks](https://www.npmjs.com/package/typhonjs-core-gulptasks) provides a NPM package which contains several pre-defined Gulp tasks for working with JSPM / SystemJS, ESLint and ESDoc generation. 
 
@@ -74,7 +74,7 @@ A `.gitignore` will be added to the `docs` directory that ignores all unnecessar
 An optional top level entry, `jspmRootPath` to ESDoc configuration file may define the JSPM root path; often this is added
 programmatically IE `typhonjs-core-gulptasks` for instance. If `jspmRootPath` is not defined `JSPMParser.getRootPath()` locates the root execution path. The root path is where the JSPM `package.json` is located.
 
-If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed. This is only necessary when it's desired to specifically limit linking. By default with no `option.packages` entry all valid dependencies with a valid `.esdocrc` or `esdoc.json` file are linked. An optional entry `option.silent` if true suppresses logging output. 
+If an `option.packages` entry is supplied only those top level packages and their dependencies will be parsed. Likewise if an `option.devPackages` entry is supplied only those top level dev package and their dependencies will be parsed. This is only necessary when it's desired to specifically limit linking. By default with no `option.packages` or `option.devPackages` entries all valid dependencies with a valid `.esdocrc` or `esdoc.json` file are linked. An optional entry `option.silent` if true suppresses logging output. 
 ```
 {
    "title": "<title>",
@@ -88,11 +88,40 @@ If an `option.packages` entry is supplied only those top level packages and thei
          {
             "silent": false,  // (Optional) if true then there is no logging output from the plugin.         
             "packages": ["backbone"]  // (Optional) if provided this list limits linking to dependencies from `package.json`.
+            "devPackages": ["babel"]  // (Optional) if provided this list limits linking to dev dependencies from `package.json`.
          }
       }
    ]
 }
 ```
+
+`esdoc-plugin-jspm` version 0.6.6 and greater exports to `global.$$esdoc_plugin_jspm` an object hash of all related parsed data for JSPM managed source code available via `typhonjs-config-jspm-parse`. The following is a synopsis of the exported data:
+```
+global.$$esdoc_plugin_jspm =
+{
+   childPackageMap,        // All child packages parsed from System / config.js
+   jspmDevPackageMap,      // Top level JSPM packages taken from options and / or package.json jspm.devDependencies.
+   jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
+   normPackageData,        // Normalized package data for all JSPM managed packages.
+   normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
+   rootDirName,            // Root directory name.
+   rootPackageName,        // Root package name.
+   rootPath,               // Root path
+   topLevelPackages,       // All top level dependencies and dev dependencies.
+   uniqueDeps,             // Unique package dependencies
+   uniqueDevDeps,          // Unique package dev dependencies
+   uniqueDepsAll           // All unique package dependencies
+};
+```
+
+By exporting all of the parsed data to `global.$$esdoc_plugin_jspm` this allows any other ESDoc plugins which may
+utilize JSPM data to access it without also having to separately parse this data in each plugin.
+
+------
+
+`esdoc-plugin-jspm` version 0.6.6 and greater also adds to all ESDoc tags any associated JSPM package data for the given tag under `tag.packageData` with the package manager specified by `tag.packageManager`. 
+
+------
 
 You may use any version of ESDoc, but as an example here is a simple Gulp task which invokes gulp-esdoc:
 
