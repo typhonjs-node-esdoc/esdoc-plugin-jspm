@@ -54,7 +54,7 @@
  * accessible with `tag.packageData`. Also a `relativePath` field is added to each tag for the associated file from
  * the root path.
  *
- * `esdoc-plugin-jspm` exports to `global.$$esdoc-plugin-jspm` an object hash of all related parsed data for JSPM
+ * `esdoc-plugin-jspm` exports to `global.$$esdoc_plugin_jspm` an object hash of all related parsed data for JSPM
  * managed source code available via `typhonjs-config-jspm-parse`. The following is a synopsis of the exported data:
  * ```
  * global.$$esdoc_plugin_jspm =
@@ -64,7 +64,7 @@
  *    jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
  *    normPackageData,        // Normalized package data for all JSPM managed packages.
  *    normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
-      rootDirName,            // Root directory name.
+ *    rootDirName,            // Root directory name.
  *    rootPackageName,        // Root package name.
  *    rootPath,               // Root path
  *    topLevelPackages,       // All top level dependencies and dev dependencies.
@@ -74,8 +74,13 @@
  * };
  * ```
  *
- * By exporting all of the parsed data to `global.$$esdoc-plugin-jspm` this allows any other ESDoc plugins which may
- * utilize JSPM data to access it without also having to separately parse this data in each plugin.
+ * By exporting all of the parsed data to `global.$$esdoc_plugin_jspm` this allows any other ESDoc plugins which may
+ * utilize JSPM data to access it without also having to separately parse this data in each plugin. An example of
+ * retrieving data follows:
+ * ```
+ * const { normPackageData, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
+ *
+ * ```
  */
 
 'use strict';
