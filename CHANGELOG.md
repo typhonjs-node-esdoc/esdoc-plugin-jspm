@@ -1,3 +1,31 @@
+## 0.6.6 (2016-05-02)
+- Updated dependencies / typhonjs-config-jspm-parse to v0.6.0
+- Separated package parsing to `packageParser.js`
+- Additional data is added to normalized package data including Github / NPM links.
+- Any ESDoc tags that are associated with JSPM managed packages now include `tag.packageData` and `tag.packageManager`.
+- Export to global data:
+```
+global.$$esdoc_plugin_jspm =
+{
+   childPackageMap,        // All child packages parsed from System / config.js
+   jspmDevPackageMap,      // Top level JSPM packages taken from options and / or package.json jspm.devDependencies.
+   jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
+   normPackageData,        // Normalized package data for all JSPM managed packages.
+   normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
+   rootDirName,            // Root directory name.
+   rootPackageName,        // Root package name.
+   rootPath,               // Root path
+   topLevelPackages,       // All top level dependencies and dev dependencies.
+   uniqueDeps,             // Unique package dependencies
+   uniqueDevDeps,          // Unique package dev dependencies
+   uniqueDepsAll           // All unique package dependencies
+};
+```
+An example of retrieving data follows:
+```
+const { normPackageData, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
+```
+
 ## 0.6.5 (2016-03-19)
 - Fixed bug in loading `.esdocrc` in parsing JSPM packages.
 
