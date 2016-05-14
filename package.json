@@ -18,7 +18,8 @@
     }
   ],
   "dependencies": {
-    "typhonjs-config-jspm-parse": "^0.6.0"
+    "typhonjs-config-jspm-parse": "^0.6.0",
+    "underscore": "^1.8.0"
   },
   "devDependencies": {
     "jspm": "^0.16.0",

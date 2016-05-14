@@ -1,11 +1,14 @@
 'use strict';
 
+import _          from 'underscore';
 import fs         from 'fs-extra';
 import path       from 'path';
 
 import JSPMParser from 'typhonjs-config-jspm-parse';
 
 import jspm       from 'jspm';   // Note: this could be dangerous for NPM < 3.0.
+
+import Utils      from './Utils.js';
 
 let packagePath = './package.json';
 
@@ -16,7 +19,7 @@ let packagePath = './package.json';
  * @param {object}   config - ESDoc configuration.
  * @param {object}   options - Optional parameters from plugin instance.
  *
- * @returns {{normPackageData: Array, normPackageDataESDoc: Array, rootPackageName: (*|T)}}
+ * @returns {{}}
  */
 export default function packageParser(config, options)
 {
@@ -101,13 +104,14 @@ export default function packageParser(config, options)
    const packageResolver = JSPMParser.getPackageResolver(System);
 
    // Stores the normalized paths and data from all JSPM lookups.
-   const normalizedData = [];
-   const parseTopLevelPackages = [];
-   const duplicateCheck = {};
+   const normalizeDataMain = [];
+   const parseTopLevelPackagesMain = [];
+
+   const normalizedDataDev = [];
+   const parseTopLevelPackagesDev = [];
 
    const normalizedDataESDoc = [];
    const parseTopLevelPackagesESDoc = [];
-   const duplicateCheckESDoc = {};
 
    for (const packageName in jspmPackageMap)
    {
@@ -117,19 +121,10 @@ export default function packageParser(config, options)
       // Save the normalized data.
       if (normalizedPackage !== null)
       {
-         // Verify if a duplicate linked package has a different relative path; post warning if so.
-         if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
-         {
-            if (!options.silent && duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
-            {
-               console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
-                + `linked to a different relative path '${normalizedPackage.relativePath}'.`);
-            }
-         }
-
-         normalizedData.push(normalizedPackage);
-         parseTopLevelPackages.push(packageName);
-         duplicateCheck[normalizedPackage.packageName] = normalizedPackage.relativePath;
+         normalizedPackage.fullPackage = Utils.parseRelativePath(normalizedPackage.relativePath);
+         normalizedPackage.jspmType = normalizedPackage.packageType || normalizedPackage.scmType;
+         normalizeDataMain.push(normalizedPackage);
+         parseTopLevelPackagesMain.push(packageName);
       }
 
       const normalizedPackageESDoc = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, options.silent,
@@ -138,26 +133,31 @@ export default function packageParser(config, options)
       // Save the normalized ESDoc data.
       if (normalizedPackageESDoc !== null)
       {
-         // Verify if a duplicate linked package has a different relative path; post warning if so.
-         if (typeof duplicateCheckESDoc[normalizedPackageESDoc.packageName] === 'string')
-         {
-            if (!options.silent &&
-             duplicateCheckESDoc[normalizedPackageESDoc.packageName] !== normalizedPackageESDoc.relativePath)
-            {
-               console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackageESDoc.packageName}' `
-                + `linked to a different relative path '${normalizedPackageESDoc.relativePath}'.`);
-            }
-         }
-
+         normalizedPackageESDoc.fullPackage = Utils.parseRelativePath(normalizedPackageESDoc.relativePath);
+         normalizedPackageESDoc.jspmType = normalizedPackageESDoc.packageType || normalizedPackageESDoc.scmType;
          normalizedDataESDoc.push(normalizedPackageESDoc);
          parseTopLevelPackagesESDoc.push(packageName);
-         duplicateCheckESDoc[normalizedPackageESDoc.packageName] = normalizedPackageESDoc.relativePath;
+      }
+   }
+
+   for (const packageName in jspmDevPackageMap)
+   {
+      const normalizedPackageDev = JSPMParser.parseNormalizedPackage(System, packageName, rootPath, options.silent,
+       'esdoc-plugin-jspm');
+
+      // Save the normalized data.
+      if (normalizedPackageDev !== null)
+      {
+         normalizedPackageDev.fullPackage = Utils.parseRelativePath(normalizedPackageDev.relativePath);
+         normalizedPackageDev.jspmType = normalizedPackageDev.packageType || normalizedPackageDev.scmType;
+         normalizedDataDev.push(normalizedPackageDev);
+         parseTopLevelPackagesDev.push(packageName);
       }
    }
 
    if (options.parseDependencies)
    {
-      const childPackages = packageResolver.getUniqueDependencyList(parseTopLevelPackages);
+      const childPackages = packageResolver.getUniqueDependencyList(parseTopLevelPackagesMain);
 
       for (let cntr = 0; cntr < childPackages.length; cntr++)
       {
@@ -167,19 +167,25 @@ export default function packageParser(config, options)
          // Save the normalized data.
          if (normalizedPackage !== null)
          {
-            // Verify if a duplicate linked package has a different relative path; post warning if so.
-            if (typeof duplicateCheck[normalizedPackage.packageName] === 'string')
-            {
-               if (!options.silent &&
-                duplicateCheck[normalizedPackage.packageName] !== normalizedPackage.relativePath)
-               {
-                  console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackage.packageName}' `
-                   + `linked to a different relative path '${normalizedPackage.relativePath}'.`);
-               }
-            }
+            normalizedPackage.fullPackage = childPackages[cntr];
+            normalizedPackage.jspmType = normalizedPackage.packageType || normalizedPackage.scmType;
+            normalizeDataMain.push(normalizedPackage);
+         }
+      }
 
-            normalizedData.push(normalizedPackage);
-            duplicateCheck[normalizedPackage.packageName] = normalizedPackage.relativePath;
+      const childPackagesDev = packageResolver.getUniqueDependencyList(parseTopLevelPackagesDev);
+
+      for (let cntr = 0; cntr < childPackagesDev.length; cntr++)
+      {
+         const normalizedPackageDev = JSPMParser.parseNormalizedPackage(System, childPackagesDev[cntr], rootPath,
+          options.silent, 'esdoc-plugin-jspm');
+
+         // Save the normalized data.
+         if (normalizedPackageDev !== null)
+         {
+            normalizedPackageDev.fullPackage = childPackagesDev[cntr];
+            normalizedPackageDev.jspmType = normalizedPackageDev.packageType || normalizedPackageDev.scmType;
+            normalizedDataDev.push(normalizedPackageDev);
          }
       }
 
@@ -193,29 +199,22 @@ export default function packageParser(config, options)
          // Save the normalized data.
          if (normalizedPackageESDoc !== null)
          {
-            // Verify if a duplicate linked package has a different relative path; post warning if so.
-            if (typeof duplicateCheckESDoc[normalizedPackageESDoc.packageName] === 'string')
-            {
-               if (!options.silent &&
-                duplicateCheckESDoc[normalizedPackageESDoc.packageName] !== normalizedPackageESDoc.relativePath)
-               {
-                  console.log(`esdoc-plugin-jspm - Warning: Duplicate package '${normalizedPackageESDoc.packageName}' `
-                   + `linked to a different relative path '${normalizedPackageESDoc.relativePath}'.`);
-               }
-            }
-
+            normalizedPackageESDoc.fullPackage = childPackagesESDoc[cntr];
+            normalizedPackageESDoc.jspmType = normalizedPackageESDoc.packageType || normalizedPackageESDoc.scmType;
             normalizedDataESDoc.push(normalizedPackageESDoc);
-            duplicateCheckESDoc[normalizedPackageESDoc.packageName] = normalizedPackageESDoc.relativePath;
          }
       }
    }
 
-   const normPackageData = normalizedData || [];
-   const normPackageDataESDoc = normalizedDataESDoc || [];
+   const normPackageDataMain = s_CREATE_NORM_MAP(normalizeDataMain || []);
+   const normPackageDataDev = s_CREATE_NORM_MAP(normalizedDataDev || []);
+   const normPackageDataESDoc = s_CREATE_NORM_MAP(normalizedDataESDoc || []);
 
-   const uniqueDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmPackageMap));
-   const uniqueDevDeps = packageResolver.getUniqueDependencyList(Object.keys(jspmDevPackageMap));
+   const normPackageDataAll = _.extend(normPackageDataMain, normPackageDataDev);
+
    const uniqueDepsAll = packageResolver.getUniqueDependencyList();
+   const uniqueDepsDev = packageResolver.getUniqueDependencyList(Object.keys(jspmDevPackageMap));
+   const uniqueDepsMain = packageResolver.getUniqueDependencyList(Object.keys(jspmPackageMap));
 
    const topLevelPackages = s_FILTER_PACKAGE_MAP(packageResolver.topLevelPackages);
    const childPackageMap = packageResolver.childPackageMap;
@@ -225,21 +224,45 @@ export default function packageParser(config, options)
       childPackageMap,        // All child packages parsed from System / config.js
       jspmDevPackageMap,      // Top level JSPM packages taken from options and / or package.json jspm.devDependencies.
       jspmPackageMap,         // Top level JSPM packages taken from options and / or package.json jspm.dependencies.
-      normPackageData,        // Normalized package data for all JSPM managed packages.
-      normPackageDataESDoc,   // Normalized package data for all ESDoc enabled JSPM managed packages.
+      normPackageDataAll,     // Normalized dev & main package data for all JSPM managed packages.
+      normPackageDataDev,     // Normalized dev package data for all JSPM managed packages.
+      normPackageDataMain,    // Normalized main package data for all JSPM managed packages.
+      normPackageDataESDoc,   // Normalized main package data for all ESDoc enabled JSPM managed packages.
       rootDirName,            // Root directory name.
       rootPackageName,        // Root package name.
       rootPath,               // Root path
       topLevelPackages,       // All top level dependencies and dev dependencies.
-      uniqueDeps,             // Unique package dependencies
-      uniqueDevDeps,          // Unique package dev dependencies
-      uniqueDepsAll           // All unique package dependencies
+      uniqueDepsAll,          // Unique package dependencies
+      uniqueDepsDev,          // Unique package dev dependencies
+      uniqueDepsMain          // All unique package dependencies
    };
 
    return global.$$esdoc_plugin_jspm;
 }
 
 // Utility functions ------------------------------------------------------------------------------------------------
+
+/**
+ * Formats the output from `typhonjs-config-jspm-parse` into an object hash with keyed by:
+ * `<packageType|scmType>-<actualPackageName>-<version>`.
+ *
+ * @param {Array} normData - normalize package data.
+ *
+ * @returns {{}}
+ */
+const s_CREATE_NORM_MAP = (normData) =>
+{
+   const result = {};
+
+   for (let cntr = 0; cntr < normData.length; cntr++)
+   {
+      const data = normData[cntr];
+      const packageID = Utils.sanitizePackageID(data.fullPackage);
+      result[packageID] = data;
+   }
+
+   return result;
+};
 
 /**
  * Defines the supported file names for ESDoc configuration file names.

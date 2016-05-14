@@ -78,17 +78,18 @@
  * utilize JSPM data to access it without also having to separately parse this data in each plugin. An example of
  * retrieving data follows:
  * ```
- * const { normPackageData, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
+ * const { normPackageDataMain, normPackageDataESDoc, rootPackageName } = global.$$esdoc_plugin_jspm;
  *
  * ```
  */
 
 'use strict';
 
-import fs            from 'fs-extra';
-import path          from 'path';
+import fs                  from 'fs-extra';
+import path                from 'path';
 
-import packageParser from './packageParser.js';
+import packageParser       from './packageParser.js';
+import packageGraphParser  from './packageGraphParser.js';
 
 let docGitIgnore;
 let docSearchScript;
@@ -149,9 +150,11 @@ export function onHandleConfig(ev)
 
    // Parse package data storing results in `global.$$esdoc_plugin_jspm`.
    packageParser(ev.data.config, options);
+   packageGraphParser(options);
 
    // Retrieve required JSPM package and path data.
-   const { normPackageData, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } = global.$$esdoc_plugin_jspm;
+   const { normPackageDataAll, normPackageDataESDoc, rootDirName, rootPackageName, rootPath } =
+    global.$$esdoc_plugin_jspm;
 
    const localSrcFullPath = rootPath + path.sep + localSrcRoot;
 
@@ -178,15 +181,18 @@ export function onHandleConfig(ev)
    // Process ast replacements --------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < normPackageData.length; cntr++)
-   {
-      regex = new RegExp(`^${normPackageData[cntr].packageName}${path.sep}`, 'g');
-      astReplace.push({ from: regex, to: `${normPackageData[cntr].relativePath}${path.sep}` });
 
-      if (normPackageData[cntr].hasMainEntry)
+   for (const key in normPackageDataAll)
+   {
+      const packageData = normPackageDataAll[key];
+
+      regex = new RegExp(`^${packageData.packageName}${path.sep}`, 'g');
+      astReplace.push({ from: regex, to: `${packageData.relativePath}${path.sep}` });
+
+      if (packageData.hasMainEntry)
       {
-         regex = new RegExp(`^${normPackageData[cntr].packageName}$`, 'g');
-         astReplace.push({ from: regex, to: `${normPackageData[cntr].relativePathMain}` });
+         regex = new RegExp(`^${packageData.packageName}$`, 'g');
+         astReplace.push({ from: regex, to: `${packageData.relativePathMain}` });
       }
    }
 
@@ -196,12 +202,11 @@ export function onHandleConfig(ev)
    const includes = [`^${localSrcRoot}`];
 
    // Add the source roots of all associated jspm packages.
-   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
+   for (const key in normPackageDataESDoc)
    {
-      if (normPackageDataESDoc[cntr].relativePath)
-      {
-         includes.push(`^${normPackageDataESDoc[cntr].relativePath}`);
-      }
+      const packageData = normPackageDataESDoc[key];
+
+      if (packageData.relativePath) { includes.push(`^${packageData.relativePath}`); }
    }
 
    ev.data.config.includes = includes;
@@ -209,10 +214,12 @@ export function onHandleConfig(ev)
    // Process code import replacements ------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
+   for (const key in normPackageDataESDoc)
    {
-      regex = new RegExp(`from[\\s]+(\'|")${normPackageDataESDoc[cntr].normalizedPath}`, 'g');
-      codeReplace.push({ from: regex, to: normPackageDataESDoc[cntr].fullPath });
+      const packageData = normPackageDataESDoc[key];
+
+      regex = new RegExp(`from[\\s]+(\'|")${packageData.normalizedPath}`, 'g');
+      codeReplace.push({ from: regex, to: packageData.fullPath });
    }
 
    // Process source code import replacements -----------------------------------------------------------------------
@@ -226,10 +233,12 @@ export function onHandleConfig(ev)
    importReplace.push({ from: wrongImport, to: actualImport });
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
+   for (const key in normPackageDataESDoc)
    {
-      wrongImport = wrongImportBase + normPackageDataESDoc[cntr].relativePath;
-      actualImport = normPackageDataESDoc[cntr].normalizedPath;
+      const packageData = normPackageDataESDoc[key];
+
+      wrongImport = wrongImportBase + packageData.relativePath;
+      actualImport = packageData.normalizedPath;
 
       importReplace.push({ from: wrongImport, to: actualImport });
    }
@@ -237,25 +246,27 @@ export function onHandleConfig(ev)
    // Process HTML replacements -------------------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
+   for (const key in normPackageDataESDoc)
    {
-      const actualPackageName = normPackageDataESDoc[cntr].isAlias ?
-       `(${normPackageDataESDoc[cntr].actualPackageName}):<br>` : '';
+      const packageData = normPackageDataESDoc[key];
+      const actualPackageName = packageData.isAlias ? `(${packageData.actualPackageName}):<br>` : '';
 
-      regex = new RegExp(`>${rootDirName}${path.sep}${normPackageDataESDoc[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${normPackageDataESDoc[cntr].normalizedPath}` });
+      regex = new RegExp(`>${rootDirName}${path.sep}${packageData.relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${packageData.normalizedPath}` });
 
-      regex = new RegExp(`>${normPackageDataESDoc[cntr].relativePath}`, 'g');
-      htmlReplace.push({ from: regex, to: `>${actualPackageName}${normPackageDataESDoc[cntr].normalizedPath}` });
+      regex = new RegExp(`>${packageData.relativePath}`, 'g');
+      htmlReplace.push({ from: regex, to: `>${actualPackageName}${packageData.normalizedPath}` });
    }
 
    // Process search index replacements -----------------------------------------------------------------------------
 
    // Process all associated JSPM packages.
-   for (let cntr = 0; cntr < normPackageDataESDoc.length; cntr++)
+   for (const key in normPackageDataESDoc)
    {
-      const fromValue = rootDirName + path.sep + normPackageDataESDoc[cntr].relativePath;
-      searchReplace.push({ from: fromValue, to: normPackageDataESDoc[cntr].normalizedPath });
+      const packageData = normPackageDataESDoc[key];
+
+      const fromValue = rootDirName + path.sep + packageData.relativePath;
+      searchReplace.push({ from: fromValue, to: packageData.normalizedPath });
    }
 }
 
@@ -349,7 +360,7 @@ export function onHandleCode(ev)
  */
 export function onHandleTag(ev)
 {
-   const { normPackageData } = global.$$esdoc_plugin_jspm;
+   const { normPackageDataAll } = global.$$esdoc_plugin_jspm;
 
    // Perform import replacement.
    for (let cntr = 0; cntr < ev.data.tag.length; cntr++)
@@ -368,9 +379,10 @@ export function onHandleTag(ev)
       {
          tag.packageManager = 'jspm';
 
-         for (let cntr2 = 0; cntr2 < normPackageData.length; cntr2++)
+         for (const key in normPackageDataAll)
          {
-            const packageData = normPackageData[cntr2];
+            const packageData = normPackageDataAll[key];
+
             if (tag.relativePath.startsWith(packageData.relativePath)) { tag.packageData = packageData; break; }
          }
       }
@@ -436,6 +448,6 @@ export function onComplete()
    // Create a `.gitignore` file that prevents checking in unnecessary ESDoc files like the AST and other generated
    // assets that are not necessary for viewing the docs. Also unprotects any jspm_packages directive from a
    // parent .gitignore as generated docs from JSPM packages will output to child directories with `jspm_packages`.
-   const gitIgnore = '!jspm_packages\nast\ncoverage.json\ndump.json\npackage.json';
+   const gitIgnore = '!jspm_packages\n!node_modules\n';
    fs.writeFileSync(docGitIgnore, gitIgnore);
 }
